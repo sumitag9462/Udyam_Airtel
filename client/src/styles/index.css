@@ -1,0 +1,76 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply text-primary bg-white;
+  }
+
+  *:focus-visible {
+    @apply outline-2 outline-offset-2 outline-primary;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary text-white px-6 py-3 font-medium min-h-touch min-w-touch
+      hover:bg-gray-800 focus-visible:outline-2 focus-visible:outline-offset-2
+      focus-visible:outline-primary disabled:opacity-50 disabled:cursor-not-allowed
+      transition-colors;
+  }
+
+  .btn-secondary {
+    @apply border border-primary text-primary px-6 py-3 font-medium min-h-touch min-w-touch
+      hover:bg-gray-50 focus-visible:outline-2 focus-visible:outline-offset-2
+      focus-visible:outline-primary disabled:opacity-50 disabled:cursor-not-allowed
+      transition-colors;
+  }
+
+  .btn-destructive {
+    @apply text-dark-red px-6 py-3 font-medium min-h-touch min-w-touch
+      hover:bg-red-50 focus-visible:outline-2 focus-visible:outline-offset-2
+      focus-visible:outline-primary disabled:opacity-50 disabled:cursor-not-allowed
+      transition-colors;
+  }
+
+  .input-field {
+    @apply w-full border border-divider px-4 py-3 text-primary min-h-[48px]
+      focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary
+      placeholder:text-secondary;
+  }
+
+  .error-text {
+    @apply text-dark-red text-sm flex items-center gap-1;
+  }
+
+  .divider {
+    @apply border-t border-divider;
+  }
+
+  .container-mobile {
+    @apply mx-auto max-w-mobile px-4;
+  }
+
+  .container-admin {
+    @apply mx-auto max-w-admin px-4 sm:px-6 lg:px-8;
+  }
+}

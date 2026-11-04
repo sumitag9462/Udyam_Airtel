@@ -1,0 +1,258 @@
+openapi: 3.0.3
+info:
+  title: Udyam One API
+  description: Regulated SMB Onboarding & Telecommunication Delivery Platform for Airtel SYNC 2026 Digital Track A.
+  version: 1.0.0
+servers:
+  - url: http://localhost:3001/api/v1
+    description: Local Development & Demo Server
+
+paths:
+  /auth/otp/request:
+    post:
+      summary: Request simulated OTP for mobile authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone]
+              properties:
+                phone:
+                  type: string
+                  example: "9876543210"
+      responses:
+        '200':
+          description: OTP challenge issued
+
+  /auth/otp/verify:
+    post:
+      summary: Verify OTP code and issue JWT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [challengeId, code]
+              properties:
+                challengeId:
+                  type: string
+                code:
+                  type: string
+                  example: "123456"
+      responses:
+        '200':
+          description: Authenticated session established
+
+  /catalogue:
+    get:
+      summary: Get active product catalogue seeded from CSV
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: segment
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 25 active products
+
+  /quotes:
+    post:
+      summary: Generate a quote bundle for an SMB profile
+      security:
+        - BearerAuth: []
+      responses:
+        '201':
+          description: Created quote with 7-day price lock
+
+  /quotes/{id}/accept:
+    post:
+      summary: Accept quote and lock commercial pricing
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Quote pricing locked
+
+  /kyc/consent:
+    post:
+      summary: Record explicit DPDP applicant consent
+      security:
+        - BearerAuth: []
+      responses:
+        '201':
+          description: Active consent created
+
+  /kyc/upload:
+    post:
+      summary: Upload KYC documents and run 19 regulated verification checks
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                gst_certificate:
+                  type: string
+                  format: binary
+                signatory_id:
+                  type: string
+                  format: binary
+                address_proof:
+                  type: string
+                  format: binary
+                udyam_certificate:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Check verdicts C01 to C19
+        '403':
+          description: Consent required before upload
+
+  /orders:
+    post:
+      summary: Create an order from an accepted quote
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '201':
+          description: Order created with estimated activation date
+
+  /orders/{id}/slot:
+    post:
+      summary: Book an installation appointment slot
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Slot confirmed
+
+  /backoffice/funnel:
+    get:
+      summary: Get live and seeded conversion funnel metrics
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 5,000 lead funnel reproduction
+
+  /backoffice/unclosed-leads:
+    get:
+      summary: Get unclosed leads ranked by ML activation propensity
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Ranked leads with transparent drivers
+
+  /me/overview:
+    get:
+      summary: Get authenticated enterprise owner overview and next action
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Owner profile, active quotes, orders, and recommended next step
+
+  /me/export:
+    get:
+      summary: Export complete machine-readable personal data (DPDP Act 2023)
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Data portability JSON package
+
+  /me/deletion-requests:
+    post:
+      summary: Submit a formal data erasure request under DPDP Act 2023
+      security:
+        - BearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+      responses:
+        '201':
+          description: Deletion request logged with statutory review note
+
+  /faq:
+    get:
+      summary: Get bilingual FAQ items (English and Hindi)
+      parameters:
+        - name: lang
+          in: query
+          schema:
+            type: string
+            enum: [en, hi]
+      responses:
+        '200':
+          description: Categorized questions and answers
+
+  /grievances:
+    post:
+      summary: Register a formal DPDP or telecom service grievance
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [category, details]
+              properties:
+                category:
+                  type: string
+                  enum: [consent_withdrawal, data_correction, erasure, service_delay, billing, other]
+                details:
+                  type: string
+                contactPhone:
+                  type: string
+                contactEmail:
+                  type: string
+      responses:
+        '201':
+          description: Grievance registered with ticket ID and SLA guarantee
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

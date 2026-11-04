@@ -1,0 +1,41 @@
+{
+  "name": "udyam-one",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "concurrently --names client,server --prefix-colors cyan,green \"npm run dev --workspace=client\" \"npm run dev --workspace=server\"",
+    "seed": "npm run seed --workspace=server",
+    "seed:verify": "npm run seed:verify --workspace=server",
+    "test": "npm run test --workspace=client --workspace=server",
+    "test:advisor": "npm run test:advisor --workspace=server",
+    "test:business": "node scripts/check-business-claims.js",
+    "test:e2e": "playwright test",
+    "lint": "eslint . --ext js,jsx",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "build": "npm run build --workspace=client"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "eslint": "^9.15.0",
+    "eslint-plugin-react": "^7.37.5",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.2.10",
+    "prettier": "^3.4.2"
+  },
+  "allowScripts": {
+    "esbuild@0.25.12": true,
+    "mongodb-memory-server@10.4.3": true,
+    "sharp@0.33.5": true,
+    "tesseract.js@5.1.1": true,
+    "express-rate-limit@7.5.1": true
+  }
+}

@@ -1,0 +1,100 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  NODE_ENV: test
+  MONGO_URI: mongodb://localhost:27017/udyam-test?replicaSet=rs0
+  JWT_ACCESS_SECRET: 'test-access-secret-32-chars-min!!'
+  JWT_REFRESH_SECRET: 'test-refresh-secret-32-chars-min!!'
+  FILE_ENC_KEY: 9GqoIJG6szGdKWhh+/ex0hvJN34j4P455jphaJ+QkA0=
+  OTP_MODE: simulated
+  LLM_PROVIDER: mock
+  KYC_REFERENCE_DATE: '2026-07-15'
+  STAFF_SEED_PASSWORD: 'TestPassword123!'
+
+jobs:
+  lint:
+    name: Lint & Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run format:check
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    needs: lint
+
+    services:
+      mongo:
+        image: mongo:7
+        options: >-
+          --health-cmd "mongosh --eval \"try{rs.status()}catch(e){rs.initiate()}\"" 
+          --health-interval 10s
+          --health-timeout 10s
+          --health-retries 5
+        ports:
+          - 27017:27017
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Run server tests
+        working-directory: server
+        run: npm test
+        env:
+          MONGO_URI: ${{ env.MONGO_URI }}
+
+      - name: Run client tests
+        working-directory: client
+        run: npm test
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build
+
+  audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    continue-on-error: true
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm audit --audit-level=high --omit=dev

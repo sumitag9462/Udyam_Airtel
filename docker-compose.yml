@@ -1,0 +1,55 @@
+services:
+  mongo:
+    image: mongo:7
+    command: ['--replSet', 'rs0', '--bind_ip_all']
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: >-
+        mongosh --eval "try{rs.status()}catch(e){rs.initiate()}"
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - '3001:3001'
+    depends_on:
+      mongo:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      MONGO_URI: mongodb://mongo:27017/udyam?replicaSet=rs0&directConnection=true
+      NODE_ENV: development
+      PORT: '3001'
+      CLIENT_ORIGIN: http://localhost:5173
+    volumes:
+      - ./data:/app/data:ro
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:3001/healthz']
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    ports:
+      - '5173:5173'
+    depends_on:
+      - server
+    environment:
+      VITE_API_URL: http://localhost:3001/api/v1
+    restart: unless-stopped
+
+volumes:
+  mongo-data:

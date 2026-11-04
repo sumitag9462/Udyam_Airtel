@@ -1,0 +1,45 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Test coverage
+coverage/
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Uploads & Runtime Data
+data/encrypted_uploads/
+*.enc
+
+# Logs
+*.log
+npm-debug.log*
+pino-debug.log*
+
+# Test output
+test-results/
+playwright-report/
+
+# Misc
+*.tgz
+.cache/

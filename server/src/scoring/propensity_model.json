@@ -1,0 +1,40 @@
+{
+  "algorithm": "Logistic Regression (L2 Regularized)",
+  "referenceDataset": "smb_leads.csv",
+  "totalObservations": 5000,
+  "totalActivations": 368,
+  "baselineActivationRate": 7.359999999999999,
+  "rocAuc": 0.6879,
+  "bias": -2.66012,
+  "featureStats": {
+    "employeeCount": {
+      "mean": 20.4656,
+      "std": 31.288144985601342
+    },
+    "numSites": {
+      "mean": 2.0392,
+      "std": 2.587752569315625
+    },
+    "monthlySpend": {
+      "mean": 3317.93,
+      "std": 4270.787282820257
+    }
+  },
+  "weights": {
+    "has_gstin": 0.16937,
+    "has_udyam": 0.03247,
+    "tier_1": 0.05881,
+    "source_referral": 0.12592,
+    "source_inbound_call": 0.02961,
+    "source_channel_partner": -0.00458,
+    "source_field_sales": -0.0574,
+    "source_website_form": -0.15865,
+    "segment_mfg": 0.01353,
+    "segment_prof": 0.18146,
+    "segment_multi": 0.00118,
+    "norm_employee_count": 0.09471,
+    "norm_num_sites": 0.03034,
+    "norm_monthly_spend": 0.15033
+  },
+  "trainedAt": "2026-11-04T17:07:41.846Z"
+}

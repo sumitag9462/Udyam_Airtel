@@ -1,0 +1,46 @@
+{
+  "landing": {
+    "title": "Udyam One",
+    "subtitle": "Smart business connectivity for your business",
+    "stepsLabel": "How it works",
+    "step1Title": "Tell us about your business",
+    "step1Desc": "Chat with our advisor in Hindi or English",
+    "step2Title": "Get your plan",
+    "step2Desc": "One transparent monthly quote with options you control",
+    "step3Title": "Quick verification",
+    "step3Desc": "Upload documents and track your order — no phone calls needed",
+    "cta": "Start",
+    "privacyLink": "Privacy notice"
+  },
+  "errors": {
+    "notFoundTitle": "Page not found",
+    "notFoundMessage": "The page you are looking for does not exist.",
+    "goHome": "Go to home",
+    "serverError": "Something went wrong. Please try again.",
+    "sessionExpired": "Your session has expired. Please log in again.",
+    "forbidden": "You do not have permission to view this page.",
+    "offline": "You appear to be offline. Some features may not work."
+  },
+  "common": {
+    "loading": "Loading…",
+    "retry": "Try again",
+    "back": "Back",
+    "next": "Next",
+    "cancel": "Cancel",
+    "save": "Save",
+    "confirm": "Confirm",
+    "remove": "Remove",
+    "close": "Close",
+    "talkToPerson": "Talk to a person",
+    "simulated": "Simulated",
+    "estimated": "Estimated",
+    "beforeTaxes": "Before applicable taxes",
+    "subjectToApproval": "Subject to Airtel approval",
+    "monthlyPrice": "Monthly price",
+    "oneTimeSetup": "One-time setup",
+    "minimumContract": "Minimum contract",
+    "firstYearCost": "First-year cost",
+    "months": "months",
+    "perMonth": "/month"
+  }
+}
