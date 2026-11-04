@@ -23,9 +23,9 @@ npm run seed:verify
 
 ### Demo URLs & Staff Logins:
 - **Client Web Application:** `http://localhost:5173`
-- **Owner Demo Login:** `http://localhost:5173/login` (Phone: `9876543210` · OTP: `123456`)
-- **Admin / Advisor Login:** `http://localhost:5173/login` (Switch to Staff Tab: `advisor@airtel.com` / `Advisor@123`)
-- **Partner Field Desk:** `http://localhost:5173/partner`
+- **Owner Demo Login:** `http://localhost:5173/login` (Phone: `9876543210` · Simulated OTP: `123456` or check dev outbox)
+- **Admin / Advisor Login:** `http://localhost:5173/login` (Switch to Staff Tab: `admin@airtel.com` or `advisor@airtel.com` · Password: `DemoPassword123!`)
+- **Partner Field Desk:** `http://localhost:5173/partner` (Staff Login: `partner@airtel.com` · Password: `DemoPassword123!`)
 
 ---
 

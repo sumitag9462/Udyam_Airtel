@@ -291,11 +291,11 @@ export default function PartnerDashboard() {
                       onChange={(e) => setStatusInput(e.target.value)}
                       className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500"
                     >
-                      <option value="FEASIBILITY_IN_PROGRESS">Feasibility in Progress</option>
-                      <option value="FEASIBILITY_CONFIRMED">Feasibility Confirmed</option>
+                      <option value="FEASIBILITY_CHECK">Feasibility Check</option>
                       <option value="INSTALL_SCHEDULED">Install Scheduled</option>
-                      <option value="INSTALL_IN_PROGRESS">Install in Progress (Physical Splicing)</option>
-                      <option value="ACTIVE">Active (Signal Verified & Handover Complete)</option>
+                      <option value="INSTALLED">Installed (Physical Splicing Complete)</option>
+                      <option value="ACTIVATED">Activated (Signal Verified & Handover Complete)</option>
+                      <option value="ON_HOLD">On Hold</option>
                     </select>
                   </div>
 

@@ -167,11 +167,12 @@ router.patch('/tasks/:id', async (req, res, next) => {
     await order.save();
 
     await AuditLog.create({
-      userId: req.user?._id,
+      actorId: req.user?._id,
+      role: req.user?.role || 'partner',
       action: 'PARTNER_TASK_UPDATE',
-      resourceType: 'Order',
-      resourceId: order._id,
-      details: {
+      entityType: 'Order',
+      entityId: order._id.toString(),
+      metadata: {
         status: order.status,
         opticalSignalDbm,
         technicianNotes,

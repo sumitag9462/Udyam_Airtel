@@ -193,16 +193,16 @@ async function verifyAll() {
     method: 'PATCH',
     headers: adminAuthHeader,
     body: JSON.stringify({
-      status: 'ACTIVE',
+      status: 'ACTIVATED',
       opticalSignalDbm: -19.4,
       technicianNotes: 'Fibre spliced at distribution box; signal verified at -19.4 dBm with zero packet loss.',
     }),
   });
   if (patchTaskRes.status !== 200) {
-    console.error('PATCH failed with status:', patchTaskRes.status, 'details:', JSON.stringify(patchTaskRes.data.error.details));
+    console.error('PATCH failed with status:', patchTaskRes.status, 'details:', JSON.stringify(patchTaskRes.data.error?.details || patchTaskRes.data));
     throw new Error('Partner task patch failed');
   }
-  console.log(`   ✓ PATCH /partner/tasks/:id -> 200 OK (Status: ACTIVE, Calibrated optical signal: -19.4 dBm)`);
+  console.log(`   ✓ PATCH /partner/tasks/:id -> 200 OK (Status: ACTIVATED, Calibrated optical signal: -19.4 dBm)`);
 
   console.log('\n===============================================================');
   console.log('>> ALL INTEGRATED CUSTOMER, ADMIN & PARTNER JOURNEYS VERIFIED <<');
