@@ -7,7 +7,7 @@ on:
 
 env:
   NODE_ENV: test
-  MONGO_URI: mongodb://localhost:27017/udyam-test?replicaSet=rs0
+  MONGO_URI: mongodb://localhost:27017/udyam-test
   JWT_ACCESS_SECRET: 'test-access-secret-32-chars-min!!'
   JWT_REFRESH_SECRET: 'test-refresh-secret-32-chars-min!!'
   FILE_ENC_KEY: 9GqoIJG6szGdKWhh+/ex0hvJN34j4P455jphaJ+QkA0=
@@ -58,14 +58,14 @@ jobs:
 
       - run: npm ci
 
-      - name: Run server tests
-        working-directory: server
+      - name: Run backend tests
+        working-directory: backend
         run: npm test
         env:
           MONGO_URI: ${{ env.MONGO_URI }}
 
-      - name: Run client tests
-        working-directory: client
+      - name: Run frontend tests
+        working-directory: frontend
         run: npm test
 
   build:

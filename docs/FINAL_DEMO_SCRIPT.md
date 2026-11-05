@@ -13,12 +13,12 @@
 Run the fast-reset seed command to establish fresh, reproducible database state:
 
 ```bash
-cd udyam-one
-# Ensure containers are running
-docker compose up -d
+cd udyam-one/backend
+# Start server if not running
+npx nodemon server
 
-# Verify seed and baseline integrity
-npm run seed:verify
+# In another terminal:
+npm run seed:verify --workspace=backend
 ```
 
 ### Demo URLs & Staff Logins:
@@ -128,5 +128,5 @@ flowchart LR
 | **External LLM Service Slow / Offline** | System is configured with `MockProvider` by default | Zero disruption; uses deterministic bilingual dialogue tree (`advisor.test.js`) |
 | **OCR Timeout on Large Image** | Client provides fallback text cards | Click "Use Specimen Data" to populate pre-verified tokens |
 | **Applicant has Cancelled GSTIN** | Expected behavior for `K01` (`37IHKXV5167L1ZS`) | Showcase statutory hard blocker: GSTIN Active check (C05) halts activation |
-| **Accidental Server Process Termination** | Quick restart via npm | Run `npm run dev` or `docker compose up -d` (restarts in < 3s) |
+| **Accidental Server Process Termination** | Quick restart via nodemon | In `udyam-one/backend`, run `npx nodemon server` (restarts in < 2s) |
 | **Network Disconnect** | Offline page active | Offline banner renders rules-engine cached catalogue with zero price corruption |

@@ -1,0 +1,47 @@
+{
+  "name": "udyam-one-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "dev": "nodemon server.js",
+    "start": "node server.js",
+    "seed": "node seed/index.js",
+    "seed:verify": "node seed/verify.js",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest --forceExit --detectOpenHandles",
+    "test:advisor": "NODE_OPTIONS=--experimental-vm-modules jest --testPathPattern=tests/advisor --forceExit",
+    "test:business": "node ../scripts/check-business-claims.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.4.0",
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "csv-parse": "^5.6.0",
+    "express": "^4.21.1",
+    "express-mongo-sanitize": "^2.2.0",
+    "express-rate-limit": "^7.4.1",
+    "file-type": "^19.6.0",
+    "helmet": "^8.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.9.2",
+    "multer": "^1.4.5-lts.1",
+    "node-cron": "^3.0.3",
+    "pino": "^9.5.0",
+    "pino-http": "^10.3.0",
+    "pino-pretty": "^13.2.0",
+    "sharp": "^0.33.5",
+    "tesseract.js": "^5.1.1",
+    "uuid": "^11.0.3",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@jest/globals": "^29.7.0",
+    "fast-check": "^3.23.2",
+    "jest": "^29.7.0",
+    "mongodb-memory-server": "^10.4.0",
+    "nodemon": "^3.1.9",
+    "supertest": "^7.0.0"
+  }
+}

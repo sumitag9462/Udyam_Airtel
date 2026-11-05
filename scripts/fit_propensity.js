@@ -193,7 +193,7 @@ const modelOutput = {
   trainedAt: new Date().toISOString(),
 };
 
-const targetDir = path.resolve(__dirname, '../server/src/scoring');
+const targetDir = path.resolve(__dirname, '../backend/src/scoring');
 fs.mkdirSync(targetDir, { recursive: true });
 fs.writeFileSync(
   path.join(targetDir, 'propensity_model.json'),
@@ -201,4 +201,4 @@ fs.writeFileSync(
   'utf8'
 );
 
-console.log('Model exported to server/src/scoring/propensity_model.json');
+console.log('Model exported to backend/src/scoring/propensity_model.json');

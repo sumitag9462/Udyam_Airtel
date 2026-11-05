@@ -2,58 +2,48 @@
 
 > [!NOTE]
 > **Project Udyam Digital · Udyam One (Airtel SYNC 2026 Track A)**  
-> Instructions for local development, automated testing, database seeding, Docker container deployment, and health monitoring.
+> Instructions for local development, automated testing, database seeding, native deployment, and health monitoring (No Docker).
 
 ---
 
 ## 1. System Architecture & Prerequisites
 
 ### Architecture Overview
-- **Client (Frontend):** React 18, Vite, Tailwind CSS, TanStack Query, React Router v6, i18next (English & Hindi). Port: `5173` (Dev/Docker) / `4173` (Playwright preview).
-- **Server (Backend):** Node.js ES Modules, Express, Mongoose, Zod validation, Pino logging, Sharp blur detection, Tesseract OCR. Port: `3001`.
-- **Database:** MongoDB 7.0 Community Edition configured with Single-Node Replica Set (`rs0`) for transaction support. Port: `27017`.
+- **Frontend (Client):** React 18, Vite, Tailwind CSS, TanStack Query, React Router v6, i18next (English & Hindi). Port: `5173` (Dev) / `4173` (Playwright preview).
+- **Backend (Server):** Node.js ES Modules, Express, Mongoose, Zod validation, Pino logging, Sharp blur detection, Tesseract OCR. Port: `3001`.
+- **Database:** MongoDB Community Edition (native service or MongoDB Atlas). Port: `27017`.
 
 ### Prerequisites
 - **Node.js:** `>= 20.0.0` (Tested on Node `v26.5.0` on macOS arm64).
-- **npm:** `>= 10.0.0` (Workspaces enabled).
-- **Docker & Docker Compose:** Docker Desktop 27.x or Docker Engine.
+- **npm:** `>= 10.0.0`.
+- **MongoDB:** Native service (`brew services start mongodb-community` on macOS, `systemctl start mongod` on Linux) or MongoDB Atlas connection string. Zero Docker required.
 
 ---
 
 ## 2. Quick Start: Local Development (Bare Metal)
 
-### Step 1: Clone & Install Dependencies
+### Step 1: Clone & Configure Backend
 ```bash
-cd udyam-one
+cd udyam-one/backend
 npm install
-```
-
-### Step 2: Environment Configuration
-Copy `.env.example` to `.env`:
-```bash
 cp .env.example .env
 ```
 
-Key environment configuration variables:
+Key environment configuration variables in `backend/.env`:
 ```ini
 NODE_ENV=development
 PORT=3001
 CLIENT_ORIGIN=http://localhost:5173
-MONGO_URI=mongodb://localhost:27017/udyam_one?replicaSet=rs0
-JWT_SECRET=super_secret_jwt_signing_key_for_udyam_one_prototype_auth_token_at_least_32_chars
-FILE_ENC_KEY=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+MONGO_URI=mongodb://127.0.0.1:27017/udyam_one
+JWT_ACCESS_SECRET=your_32_char_long_random_jwt_access_secret_key_here!
+JWT_REFRESH_SECRET=your_32_char_long_random_jwt_refresh_secret_key_here!
+FILE_ENC_KEY=9GqoIJG6szGdKWhh+/ex0hvJN34j4P455jphaJ+QkA0=
 KYC_REFERENCE_DATE=2026-07-15
 LLM_PROVIDER=mock
+OTP_MODE=simulated
 ```
 
-### Step 3: Start MongoDB Replica Set
-If running MongoDB locally or via Docker:
-```bash
-docker compose up -d mongo
-# Wait 3 seconds for replica set initialization (rs0)
-```
-
-### Step 4: Seed Synthetic Data & Verify
+### Step 2: Seed Synthetic Data & Verify
 ```bash
 # Seed 25 products, 5,000 leads, 3,534 GSTINs, 2,723 Udyam rows
 npm run seed
@@ -62,13 +52,23 @@ npm run seed
 npm run seed:verify
 ```
 
-### Step 5: Launch Development Servers
+### Step 3: Launch Backend Server
 ```bash
-# Starts both frontend (vite) and backend (nodemon) concurrently
+npx nodemon server
+```
+- Backend runs on `http://localhost:3001`.
+- Health checks: `http://localhost:3001/healthz`, `http://localhost:3001/readyz`.
+
+### Step 4: Configure & Launch Frontend
+In a separate terminal:
+```bash
+cd udyam-one/frontend
+npm install
+cp .env.example .env
 npm run dev
 ```
 - Open `http://localhost:5173` in your browser.
-- Backend API accessible at `http://localhost:3001/api/v1`.
+- Vite dev server proxies `/api` calls directly to `http://127.0.0.1:3001`.
 
 ---
 
@@ -98,32 +98,48 @@ npm run build
 
 ---
 
-## 4. Production & Demo Deployment via Docker Compose
+## 4. Production Process Management (Native / PM2 / systemd)
 
-To run the complete isolated containerized stack:
+For production deployment on Linux / macOS servers without Docker:
 
+### Option A: Using PM2
 ```bash
-# Build and start all 3 services in detached mode
-docker compose up --build -d
+# Install PM2 globally
+npm install -g pm2
 
-# Check container status and health checks
-docker ps
+# Build frontend production assets
+cd udyam-one/frontend
+npm run build
+
+# Start backend cluster
+cd ../backend
+pm2 start server.js --name "udyam-backend" -i max
+
+# Serve frontend via Nginx or static file server proxying /api to port 3001
 ```
 
-### Expected Docker Services:
-1. `udyam-one-mongo-1`: MongoDB 7.0 (`healthy`) on port `27017`
-2. `udyam-one-server-1`: Express Backend (`healthy`) on port `3001`
-3. `udyam-one-client-1`: Vite / Static Frontend on port `5173`
+### Option B: Systemd Service (Linux)
+Create `/etc/systemd/system/udyam-backend.service`:
+```ini
+[Unit]
+Description=Udyam One Backend API
+After=network.target mongod.service
 
-To inspect container logs:
-```bash
-docker compose logs -f server
-docker compose logs -f client
+[Service]
+Type=simple
+User=node
+WorkingDirectory=/opt/udyam-one/backend
+ExecStart=/usr/bin/node server.js
+Restart=on-failure
+Environment=NODE_ENV=production
+Environment=PORT=3001
+
+[Install]
+WantedBy=multi-user.target
 ```
-
-To stop and remove containers:
 ```bash
-docker compose down -v
+sudo systemctl daemon-reload
+sudo systemctl enable --now udyam-backend
 ```
 
 ---

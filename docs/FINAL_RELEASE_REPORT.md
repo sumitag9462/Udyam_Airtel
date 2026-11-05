@@ -5,7 +5,7 @@
 > **Release Date:** 5 November 2026  
 > **Auditor Role:** Principal Full-Stack Release Engineer & Security Reviewer  
 > **Repository:** `/Users/sumitagrawal/Desktop/AIRTEL HACKATHON/udyam-one`  
-> **Environment:** Node `v26.5.0`, npm `11.17.0`, Docker 27.x, MongoDB 7.0 Replica Set (`rs0`)  
+> **Environment:** Node `v26.5.0`, npm `11.17.0`, Native MongoDB 8.3 / Atlas, Express + Vite (No Docker)<br/>
 > **Release Disposition:** **CONDITIONAL DEMO READY** (Full Jury Demo Ready with Sanctioned Simulations)
 
 ---
@@ -27,7 +27,7 @@ All release gates evaluated with **reproduced empirical test evidence**. Zero as
 | **9. Privacy & Legal Compliance** | DPDP Act 2023 & Rules 2025; notice-first consent; 403 upload gate; AES-256-GCM | HTTP 403 gate verified; tamper-proof encryption verified; statutory legal audit completed | **PASS** | `docs/LEGAL_CLAIMS_AUDIT.md`, `docs/PRIVACY.md` | P0 |
 | **10. UI Responsiveness & a11y** | Mobile (375px), keyboard focus, WCAG AA contrast, Hindi typography resilience | Audited across 375px/768px/1440px; color contrast > 4.5:1; zero text clipping | **PASS** | `docs/UX_BUG_BASH.md` | P1 |
 | **11. Test & Build Automation** | Unit, integration, E2E browser tests, zero lint warnings | 177 unit tests pass; 6 Playwright journeys pass; ESLint 0 errors, 0 warnings | **PASS** | `npm test`, `npm run test:e2e`, `npm run lint` | P0 |
-| **12. DevOps & Infrastructure** | Supported Node version (Node 20+); Docker container health; clean clone startup | Node v26.5.0 verified; 3 Docker containers healthy (`client-1`, `server-1`, `mongo-1`) | **PASS** | `docker ps`, `DEPLOYMENT.md` | P0 |
+| **12. DevOps & Infrastructure** | Supported Node version (Node 20+); Native MongoDB & clean non-Docker startup | Node v26.5.0 verified; Express port 3001 and Vite port 5173 run cleanly via two terminal commands | **PASS** | `docs/LOCAL_SETUP.md`, `DEPLOYMENT.md` | P0 |
 | **13. Jury Demo Execution** | $\le 180$s clickable walkthrough; pre-demo reset; branching fallback sheet | Script timed to 180s covering all 4 funnel leaks, live KYC, and ML recovery | **PASS** | `docs/FINAL_DEMO_SCRIPT.md` | P0 |
 
 ---
@@ -52,9 +52,9 @@ All release gates evaluated with **reproduced empirical test evidence**. Zero as
 
 | Observation ID | Priority | Description | Operational Guidance |
 | :---: | :---: | :--- | :--- |
-| **OBS-01** | P2 | Docker container client runs on port `5173`; Playwright preview webserver runs on port `4173` to prevent port collisions | Maintained separate ports in `playwright.config.js`; documented in `DEPLOYMENT.md`. |
+| **OBS-01** | P2 | Frontend dev server runs on port `5173`; Playwright preview webserver runs on port `4173` to prevent port collisions | Maintained separate ports in `playwright.config.js`; documented in `DEPLOYMENT.md`. |
 | **OBS-02** | P2 | Tesseract OCR language pack `eng.traineddata` (5.1 MB) resides in root directory | Stored locally for fast offline execution without network fetch during jury demo. |
-| **OBS-03** | P3 | MongoDB memory server vs Docker replica set | Tests utilize Mongo Memory Server or local replica set depending on `MONGO_URI` environment configuration. |
+| **OBS-03** | P3 | MongoDB memory server vs native local mongod | Tests utilize Mongo Memory Server or native local mongod depending on `MONGO_URI` environment configuration. |
 
 ---
 
@@ -72,7 +72,7 @@ All release gates evaluated with **reproduced empirical test evidence**. Zero as
   [x] 40/40 Database Replica Set Seed Assertions Passing
   [x] ESLint: 0 Errors, 0 Warnings Across Monorepo
   [x] Client Production Build: Clean Vite Bundle in 971ms
-  [x] 3/3 Healthy Docker Compose Services (udyam-one-client, server, mongo)
+  [x] Non-Docker 2-Terminal Architecture Verified (Vite on :5173, Express on :3001)
   [x] 19 Canonical KYC Checks (C01–C19) Verified Across All 12 Challenge Applicants
   [x] DPDP Act 2023 & DPDP Rules 2025 Statutory Compliance Verified
   [x] 7-Slide Pitch Deck Traceability Matrix Mapped and Audited

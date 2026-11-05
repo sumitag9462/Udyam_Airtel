@@ -39,7 +39,7 @@ async function verifyAll() {
 
   // 2. Customer Journey: Auth -> Advisor -> Quote -> KYC -> Order
   console.log('\n2. Complete Customer Journey (Owner Experience):');
-  const testPhone = '9876543210';
+  const testPhone = '98' + Math.floor(10000000 + Math.random() * 90000000);
   const otpReqRes = await req('/auth/otp/request', {
     method: 'POST',
     body: JSON.stringify({ phone: testPhone }),
@@ -49,7 +49,9 @@ async function verifyAll() {
 
   // Fetch OTP from dev outbox
   const outboxRes = await req('/dev/outbox');
-  const notif = outboxRes.data.data.notifications.find(n => n.toMasked?.includes('3210'));
+  const lastDigits = testPhone.slice(-4);
+  const matching = (outboxRes.data?.data?.notifications || []).filter(n => n.toMasked?.includes(lastDigits));
+  const notif = matching[matching.length - 1];
   const otpCode = notif ? notif.payload.code : '123456';
   console.log(`   ✓ Retrieved simulated OTP from dev outbox: ${otpCode}`);
 

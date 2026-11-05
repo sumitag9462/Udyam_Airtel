@@ -87,5 +87,20 @@
 - **Status:** **ACCEPTED**
 - **Date:** November 2026
 - **Context:** Node 20 reached End-of-Life maintenance. The repository needed alignment with modern Node LTS versions (Node 22 / Node 24 / Node 26).
-- **Decision:** Configured `package.json` engines to `"node": ">=20"` and verified that all server VM modules, ES loaders, Tesseract OCR, and Sharp native bindings build and execute cleanly on Node v26.5.0 and Docker Node 22-slim containers.
-- **Consequences:** Eliminates runtime deprecation risks; guarantees clean deployment across developer machines and Docker compose environments.
+- **Decision:** Configured `package.json` engines to `"node": ">=20"` and verified that all server VM modules, ES loaders, Tesseract OCR, and Sharp native bindings build and execute cleanly on Node v26.5.0.
+- **Consequences:** Eliminates runtime deprecation risks; guarantees clean deployment across developer machines.
+
+---
+
+## ADR-09: Migration to Non-Docker Native MERN Stack Architecture
+
+- **Status:** **ACCEPTED**
+- **Date:** November 2026
+- **Context:** Docker containers introduced friction, virtualization overhead, and port collision issues for local hackathon jury demonstrations. The platform required a standard, lightweight developer experience where any engineer can clone and run with two simple terminal commands without container dependencies.
+- **Decision:**
+  1. Replaced nested container structure with top-level `frontend/` (React + Vite) and `backend/` (Node + Express + Mongoose).
+  2. Created `backend/server.js` allowing standard launch via `npx nodemon server`.
+  3. Replaced Docker containerized MongoDB with native local MongoDB (`mongodb://127.0.0.1:27017/udyam_one`) and MongoDB Atlas support.
+  4. Configured Vite development proxy (`/api` -> `http://127.0.0.1:3001`) with cookie and header passthrough.
+  5. Removed `docker-compose.yml`, Dockerfiles, `.dockerignore`, and container init scripts.
+- **Consequences:** Near-instant server startup (< 2s), zero Docker overhead, clean single-machine demo-ability.

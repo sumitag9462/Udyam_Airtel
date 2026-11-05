@@ -4,24 +4,24 @@
   "private": true,
   "type": "module",
   "workspaces": [
-    "client",
-    "server"
+    "frontend",
+    "backend"
   ],
   "engines": {
     "node": ">=20"
   },
   "scripts": {
-    "dev": "concurrently --names client,server --prefix-colors cyan,green \"npm run dev --workspace=client\" \"npm run dev --workspace=server\"",
-    "seed": "npm run seed --workspace=server",
-    "seed:verify": "npm run seed:verify --workspace=server",
-    "test": "npm run test --workspace=client --workspace=server",
-    "test:advisor": "npm run test:advisor --workspace=server",
+    "dev": "concurrently --names frontend,backend --prefix-colors cyan,green \"npm run dev --workspace=frontend\" \"npm run dev --workspace=backend\"",
+    "seed": "npm run seed --workspace=backend",
+    "seed:verify": "npm run seed:verify --workspace=backend",
+    "test": "npm run test --workspace=frontend --workspace=backend",
+    "test:advisor": "npm run test:advisor --workspace=backend",
     "test:business": "node scripts/check-business-claims.js",
     "test:e2e": "playwright test",
     "lint": "eslint . --ext js,jsx",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "build": "npm run build --workspace=client"
+    "build": "npm run build --workspace=frontend"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",

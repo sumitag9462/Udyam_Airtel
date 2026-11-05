@@ -44,7 +44,7 @@ flowchart TD
     end
 
     subgraph Persistence ["Persistence & Encrypted Storage"]
-        Mongo[("MongoDB 7 Single-Node Replica Set")]
+        Mongo[("Native MongoDB / MongoDB Atlas")]
         EncStorage[("Local AES-256-GCM Encrypted Storage Volume")]
     end
 

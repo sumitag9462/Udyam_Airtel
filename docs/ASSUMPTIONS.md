@@ -51,7 +51,7 @@
 
 ## Data Pack
 
-17. **Data files are read-only** (Section 3): Files in `/data` are never modified by the application. They are mounted read-only in Docker.
+17. **Data files are read-only** (Section 3): Files in `/data` are never modified by the application; seeds and verification scripts treat the directory as immutable read-only source files.
 
 18. **CRLF line endings** (Section 3): The CSV parser is configured for `bom: true` and CRLF support.
 

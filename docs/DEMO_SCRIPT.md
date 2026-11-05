@@ -7,7 +7,7 @@
 ---
 
 ## Pre-Demo Quick Setup (30 Seconds Before Presentation)
-1. Ensure Docker or local stack is running: MongoDB replica set, Server (`http://localhost:3001`), Client (`http://localhost:5173`).
+1. Ensure MongoDB is running, backend server is running (`http://localhost:3001`), and frontend is running (`http://localhost:5173`).
 2. Have two browser tabs open:
    - **Tab 1 (Customer Onboarding):** `http://localhost:5173/login`
    - **Tab 2 (Executive Back-Office):** `http://localhost:5173/backoffice` (Logged in as Staff / Advisor)

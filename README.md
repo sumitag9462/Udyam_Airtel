@@ -31,51 +31,80 @@ Across 5,000 historical Airtel SMB leads, **only 7.36% (368 leads) activate**:
 
 ## 3. Tech Stack
 
-- **Runtime:** Node.js 20 LTS, ES modules, npm workspaces (`client`, `server`)
+- **Runtime:** Node.js >= 20 LTS, ES modules, separate `frontend/` and `backend/` packages
 - **Frontend:** React 18, Vite, Tailwind CSS, TanStack Query, Zustand, React Router 6, react-i18next
 - **Backend:** Express 4, Zod schema validation, Mongoose 8, Helmet, CORS, Cookie-Parser, Pino structured logging
-- **Database:** MongoDB 7 single-node replica set (transactions enabled)
+- **Database:** Native MongoDB (Homebrew / systemd / MongoDB Atlas) on `mongodb://127.0.0.1:27017/udyam_one`
 - **OCR & Vision:** Tesseract.js (`eng+hin`), Sharp (Laplacian variance image blur detection)
 - **Cryptography:** Node.js `crypto` AES-256-GCM authenticated encryption with 12-byte random IVs and 16-byte auth tags
-- **Testing:** Jest, Supertest, Fast-check property testing
+- **Testing:** Jest, Supertest, Fast-check property testing, Playwright E2E
 
 ---
 
-## 4. Quickstart Guide
+## 4. Run Udyam One Without Docker (Quickstart Guide)
+
+> [!NOTE]
+> Zero Docker containers required. Run natively with standard Node.js and MongoDB.
 
 ### Prerequisites
-- Node.js >= 20.x
-- Docker & Docker Compose (for MongoDB replica set)
+1. **Node.js:** `>= 20.x` (`node -v`)
+2. **MongoDB (Native or Atlas):**
+   - **macOS:** `brew tap mongodb/brew && brew install mongodb-community && mongod --config /opt/homebrew/etc/mongod.conf`
+   - **Linux:** `sudo systemctl start mongod`
+   - **Atlas (Cloud):** Set `MONGO_URI=mongodb+srv://<user>:<password>@<cluster>/udyam_one` in `backend/.env`
 
-### 1. Start MongoDB Replica Set
-```bash
-docker compose up -d mongo
-```
+---
 
-### 2. Install Dependencies
+### Terminal A: Backend API Server
 ```bash
+cd udyam-one/backend
+
+# 1. Install dependencies (first time only)
 npm install
-```
 
-### 3. Seed Database
-Seeds 25 products, 5,000 SMB leads, 3,534 GSTIN registry entries, 2,723 Udyam registry entries, and demo staff accounts:
-```bash
+# 2. Configure environment (first time only)
+cp .env.example .env
+
+# 3. Seed synthetic database (25 SKUs, 5,000 leads, registries)
 npm run seed
-```
 
-### 4. Run Test Suites
-Executes all 14 comprehensive test suites across the monorepo:
-```bash
-npm test
+# 4. Start backend with live reloading
+npx nodemon server
 ```
+- **Backend API:** `http://localhost:3001/api/v1`
+- **Liveness & Readiness:** `http://localhost:3001/healthz`, `http://localhost:3001/readyz`
 
-### 5. Launch Development Servers
+---
+
+### Terminal B: Frontend Client
 ```bash
+cd udyam-one/frontend
+
+# 1. Install dependencies (first time only)
+npm install
+
+# 2. Configure environment (first time only)
+cp .env.example .env
+
+# 3. Launch Vite development server
 npm run dev
 ```
-- **Client:** `http://localhost:5173`
-- **Server API:** `http://localhost:3001/api/v1`
-- **Health Checks:** `http://localhost:3001/healthz`, `http://localhost:3001/readyz`
+- **Web Application:** `http://localhost:5173`
+- The Vite development proxy forwards all `/api` requests to `http://127.0.0.1:3001`.
+
+---
+
+### Automated Verification & Testing
+```bash
+# Run 15 Jest backend test suites (177 tests)
+cd udyam-one/backend && npm test
+
+# Run mathematical statutory business claims & ARR checks
+cd udyam-one/backend && npm run test:business
+
+# Run Playwright real-browser E2E journeys
+cd udyam-one && npx playwright test
+```
 
 ---
 
@@ -91,7 +120,11 @@ npm run dev
 
 ## 6. Project Documentation Index
 
-### Release & Audit Deliverables (Section 55):
+### Release & Audit Deliverables:
+- [Run Without Docker: Local Setup Guide](docs/LOCAL_SETUP.md)
+- [Non-Docker MERN Migration Audit](docs/MIGRATION_AUDIT.md)
+- [UI Defect Fix Audit](docs/UI_FIX_AUDIT.md)
+- [Jury Live Demo Script (180 Seconds)](docs/JURY_DEMO.md)
 - [Final Release Report & Readiness Scorecard](docs/FINAL_RELEASE_REPORT.md)
 - [Baseline Audit & Defect Verification](docs/BASELINE_AUDIT.md)
 - [Release Route Matrix (49 Routes Audited)](docs/RELEASE_ROUTE_MATRIX.md)
@@ -101,7 +134,6 @@ npm run dev
 - [Business Case, Cohort Economics & ARR Proof](docs/business-case-support.md)
 - [Seven-Slide Pitch Deck Traceability](docs/DECK_TO_APP_TRACEABILITY.md)
 - [Architecture Decision Log (ADR)](docs/DECISION_LOG.md)
-- [3-Minute Timed Jury Demo Script (≤180s)](docs/FINAL_DEMO_SCRIPT.md)
 - [UX Bug Bash & Accessibility Audit](docs/UX_BUG_BASH.md)
 - [Deployment & Operations Guide](DEPLOYMENT.md)
 
