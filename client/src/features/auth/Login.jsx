@@ -3,6 +3,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../store/authStore.js';
 import { apiRequest } from '../../api/client.js';
+import Navbar from '../../components/Navbar.jsx';
+import Footer from '../../components/Footer.jsx';
 
 export default function Login() {
   const { t } = useTranslation();
@@ -137,8 +139,14 @@ export default function Login() {
 
     try {
       setLoading(true);
-      await verifyOtp(phone, code);
-      navigate('/quotes');
+      const activeConversationId = sessionStorage.getItem('udyam_advisor_conversationId');
+      const activeSessionSecret = sessionStorage.getItem('udyam_advisor_sessionSecret');
+      await verifyOtp(phone, code, {
+        conversationId: activeConversationId || undefined,
+        sessionSecret: activeSessionSecret || undefined,
+      });
+      const dest = location.state?.from || '/quotes';
+      navigate(dest, { state: location.state });
     } catch (err) {
       setError(err.message || 'Invalid OTP code. Please try again.');
     } finally {
@@ -171,7 +179,9 @@ export default function Login() {
   };
 
   return (
-    <main className="container-mobile py-8">
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-between">
+      <Navbar />
+      <main className="container-mobile py-12 flex-1 w-full">
       <div className="mb-8 text-center">
         <h1 className="text-2xl font-bold tracking-tight text-primary">
           <span className="text-airtel-red">Airtel</span> Udyam One
@@ -261,7 +271,11 @@ export default function Login() {
               <button
                 type="submit"
                 disabled={loading || phone.length < 10}
-                className="btn-primary w-full mt-2"
+                className={`w-full mt-2 py-3 px-6 rounded font-semibold text-sm transition-all min-h-touch ${
+                  phone.length === 10 && !loading
+                    ? 'bg-airtel-red text-white hover:bg-dark-red shadow-sm cursor-pointer'
+                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                }`}
               >
                 {loading ? t('common.sending', 'Sending...') : t('auth.getOtp', 'Get OTP')}
               </button>
@@ -339,7 +353,11 @@ export default function Login() {
               <button
                 type="submit"
                 disabled={loading || otp.join('').length !== 6}
-                className="btn-primary w-full"
+                className={`w-full py-3 px-6 rounded font-semibold text-sm transition-all min-h-touch ${
+                  otp.join('').length === 6 && !loading
+                    ? 'bg-airtel-red text-white hover:bg-dark-red shadow-sm cursor-pointer'
+                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                }`}
               >
                 {loading ? t('common.verifying', 'Verifying...') : t('auth.verifyContinue', 'Verify & Continue')}
               </button>
@@ -403,7 +421,11 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading || !staffEmail || !staffPassword}
-            className="btn-primary w-full mt-2"
+            className={`w-full mt-2 py-3 px-6 rounded font-semibold text-sm transition-all min-h-touch ${
+              staffEmail && staffPassword && !loading
+                ? 'bg-airtel-red text-white hover:bg-dark-red shadow-sm cursor-pointer'
+                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+            }`}
           >
             {loading ? t('common.loggingIn', 'Signing In...') : t('auth.staffSignIn', 'Sign In as Staff')}
           </button>
@@ -424,6 +446,8 @@ export default function Login() {
           </div>
         </form>
       )}
-    </main>
+      </main>
+      <Footer />
+    </div>
   );
 }

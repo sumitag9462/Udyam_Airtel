@@ -21,16 +21,16 @@ export default class MockProvider extends LLMProvider {
 
     // 1. Extract business type & segment
     if (!existingProfile.businessType) {
-      if (/\b(law|advocate|ca|chartered|consultant|legal)\b/i.test(userText)) {
+      if (/\b(law|advocate|ca|chartered|consultant|legal)\b/i.test(userText) || /लॉ\s*ऑफिस|वकील/i.test(userText)) {
         extracted.businessType = 'CA / Law office';
         extracted.segment = 'prof';
       } else if (/\b(pathology|diagnostic)\b/i.test(userText)) {
         extracted.businessType = 'Clinic / Pathology lab';
         extracted.segment = 'multi';
-      } else if (/\b(dental|clinic|doctor|hospital|medical)\b/i.test(userText)) {
+      } else if (/\b(dental|clinic|doctor|hospital|medical)\b/i.test(userText) || /क्लिनिक/i.test(userText)) {
         extracted.businessType = 'Dental clinic';
         extracted.segment = 'prof';
-      } else if (/\b(kirana|grocery)\b/i.test(userText)) {
+      } else if (/\b(kirana|grocery)\b/i.test(userText) || /किराना/i.test(userText)) {
         extracted.businessType = 'Kirana / Grocery';
         extracted.segment = 'micro';
       } else if (/\b(restaurant|cafe|hotel|food|dhaba)\b/i.test(userText)) {
@@ -75,7 +75,7 @@ export default class MockProvider extends LLMProvider {
       } else if (/\b(software|tech|it|agency|developer)\b/i.test(userText)) {
         extracted.businessType = 'IT / Software services';
         extracted.segment = 'prof';
-      } else if (/\b(retail|dukaan|shop|store)\b/i.test(userText)) {
+      } else if (/\b(retail|dukaan|shop|store)\b/i.test(userText) || /दुकान/i.test(userText)) {
         extracted.businessType = 'Retail store';
         extracted.segment = 'micro';
       }
@@ -85,11 +85,24 @@ export default class MockProvider extends LLMProvider {
     const tier1Cities = ['delhi', 'mumbai', 'bengaluru', 'bangalore', 'chennai', 'hyderabad', 'kolkata', 'pune', 'ahmedabad'];
     const tier2Cities = ['jaipur', 'lucknow', 'chandigarh', 'indore', 'nagpur', 'patna', 'bhopal', 'kochi', 'surat', 'vadodara', 'visakhapatnam', 'varanasi', 'coimbatore', 'ludhiana'];
 
-    for (const c of tier1Cities) {
-      if (userText.includes(c)) {
-        extracted.city = c.charAt(0).toUpperCase() + c.slice(1);
-        extracted.cityTier = 1;
-        break;
+    if (userText.includes('दिल्ली')) {
+      extracted.city = 'Delhi';
+      extracted.cityTier = 1;
+    } else if (userText.includes('जयपुर')) {
+      extracted.city = 'Jaipur';
+      extracted.cityTier = 2;
+    } else if (userText.includes('मुंबई')) {
+      extracted.city = 'Mumbai';
+      extracted.cityTier = 1;
+    }
+
+    if (!extracted.city) {
+      for (const c of tier1Cities) {
+        if (userText.includes(c)) {
+          extracted.city = c.charAt(0).toUpperCase() + c.slice(1);
+          extracted.cityTier = 1;
+          break;
+        }
       }
     }
     if (!extracted.city) {
@@ -102,10 +115,11 @@ export default class MockProvider extends LLMProvider {
       }
     }
 
-    const wordToNum = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10 };
+    const wordToNum = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, 'एक': 1, 'दो': 2 };
 
     // 3. Extract employee / staff count
-    const staffMatch = userText.match(/\b(\d+|one|two|three|four|five|six|seven|eight|nine|ten)\s*(employees?|staff|people|team|members?|log|persons?|developers?|workers?|users?)\b/i);
+    const staffMatch = userText.match(/\b(\d+|one|two|three|four|five|six|seven|eight|nine|ten)\s*(employees?|staff|people|team|members?|log|persons?|developers?|workers?|users?|karmachari)\b/i) ||
+      userText.match(/(\d+)\s*(?:कर्मचारी|लोग|सदस्य)/i);
     if (staffMatch) {
       const raw = staffMatch[1].toLowerCase();
       extracted.employeeCount = wordToNum[raw] || parseInt(raw, 10);
@@ -114,11 +128,12 @@ export default class MockProvider extends LLMProvider {
     }
 
     // 4. Extract sites / branches
-    const siteMatch = userText.match(/\b(\d+|one|two|three|four|five|six|seven|eight|nine|ten)\s*(?:[a-z]+\s+)?(sites?|branch(?:es)?|locations?|offices?|stores?|dukaan|factories|factory|workshops?)\b/i);
+    const siteMatch = userText.match(/\b(\d+|one|two|three|four|five|six|seven|eight|nine|ten)\s*(?:[a-z]+\s+)?(sites?|branch(?:es)?|locations?|offices?|stores?|dukaan|factories|factory|workshops?)\b/i) ||
+      userText.match(/(?:एक|1)\s*(?:लॉ\s*ऑफिस|ऑफिस|स्थान|शाखा|ब्रांच)/i);
     if (siteMatch) {
-      const raw = siteMatch[1].toLowerCase();
-      extracted.numSites = wordToNum[raw] || parseInt(raw, 10);
-    } else if (/\b(single|1|one)\s*(?:[a-z]+\s+)?(location|branch|site|office|shop|dukaan|workshop|factory)\b/i.test(userText) || /1\s*hi\s*(workshop|branch|site|location)/i.test(userText)) {
+      const raw = siteMatch[1]?.toLowerCase();
+      extracted.numSites = wordToNum[raw] || (raw ? parseInt(raw, 10) : 1);
+    } else if (/\b(single|1|one)\s*(?:[a-z]+\s+)?(location|branch|site|office|shop|dukaan|workshop|factory)\b/i.test(userText) || /1\s*hi\s*(workshop|branch|site|location)/i.test(userText) || /एक\s*(?:स्थान|शाखा|ऑफिस)/i.test(userText)) {
       extracted.numSites = 1;
     }
 
@@ -133,7 +148,12 @@ export default class MockProvider extends LLMProvider {
 
     // 6. Extract must haves
     const mustHaves = existingProfile.mustHaves ? [...existingProfile.mustHaves] : [];
-    if (/backup|failover|redundancy|second line/i.test(userText) && !mustHaves.includes('backup_internet')) {
+    if (/cloud\s*backup|data\s*backup|storage\s*backup|1tb\s*backup|क्लाउड\s*बैकअप/i.test(userText) && !mustHaves.includes('cloud_backup')) {
+      mustHaves.push('cloud_backup');
+    }
+    if (/(?:backup\s*(?:internet|connection|line|4g|5g|failover)|failover|redundancy|second\s*line)/i.test(userText) && !mustHaves.includes('backup_internet')) {
+      mustHaves.push('backup_internet');
+    } else if (/\bbackup\b/i.test(userText) && !/cloud\s*backup|क्लाउड/i.test(userText) && !mustHaves.includes('backup_internet')) {
       mustHaves.push('backup_internet');
     }
     if (/static ip|fixed ip|public ip/i.test(userText) && !mustHaves.includes('static_ip')) {
@@ -142,7 +162,7 @@ export default class MockProvider extends LLMProvider {
     if (/cctv|camera|surveillance/i.test(userText) && !mustHaves.includes('cctv')) {
       mustHaves.push('cctv');
     }
-    if (/email|google|microsoft|office suite/i.test(userText) && !mustHaves.includes('email')) {
+    if (/email|google|microsoft|office suite|ईमेल/i.test(userText) && !mustHaves.includes('email')) {
       mustHaves.push('email');
     }
     if (/pos|billing|retail software/i.test(userText) && !mustHaves.includes('pos')) {
@@ -156,9 +176,16 @@ export default class MockProvider extends LLMProvider {
     }
 
     // 7. Extract budget
-    const budgetMatch = userText.match(/budget\s*(?:of|is|around|under)?\s*(?:rs|inr|₹)?\s*(\d+)/i);
+    const budgetMatch = userText.match(/(?:budget|बजट|max(?:imum)?\s*budget|monthly\s*spend|spend)\s*(?:of|is|around|under|hai|hamara|about|upto|up\s*to)?\s*(?:rs\.?|inr|₹|रुपये)?\s*([\d,]+(?:\s*hazaar|\s*k)?)/i) ||
+      userText.match(/([\d,]+)\s*(?:रुपये|rupees)?\s*(?:का\s*बजट|बजट)/i);
     if (budgetMatch) {
-      extracted.budgetMonthly = parseInt(budgetMatch[1], 10);
+      let rawBudget = budgetMatch[1].replace(/,/g, '').trim().toLowerCase();
+      if (rawBudget.includes('hazaar') || rawBudget.includes('k')) {
+        const numPart = parseInt(rawBudget, 10);
+        extracted.budgetMonthly = numPart * 1000;
+      } else {
+        extracted.budgetMonthly = parseInt(rawBudget, 10);
+      }
     }
 
     // Check for human handoff request

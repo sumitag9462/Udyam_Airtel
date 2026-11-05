@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import CheckListModal from './CheckListModal.jsx';
 
-export default function KycStatusCard({ result, onProceedToTracker }) {
+export default function KycStatusCard({ result, onProceedToTracker, quoteId }) {
   const [showChecks, setShowChecks] = useState(false);
 
   if (!result) return null;
@@ -101,7 +101,7 @@ export default function KycStatusCard({ result, onProceedToTracker }) {
             onClick={onProceedToTracker}
             className="w-full sm:w-auto px-6 py-2.5 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700 transition shadow-sm"
           >
-            Track Order & Installation →
+            {quoteId ? 'Proceed to E-Sign & Checkout →' : 'Track Order & Installation →'}
           </button>
         )}
 

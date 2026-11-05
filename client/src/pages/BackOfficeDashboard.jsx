@@ -51,18 +51,18 @@ export default function BackOfficeDashboard() {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Top Navigation */}
       <header className="bg-gray-900 text-white border-b border-gray-800 sticky top-0 z-30">
-        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <div className="max-w-7xl mx-auto px-4 min-h-[4rem] py-2 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
             <span className="text-xl font-black text-red-500 tracking-tight">airtel</span>
-            <span className="text-sm font-bold bg-gray-800 px-2.5 py-1 rounded">Executive Back-Office</span>
-            <span className="text-xs text-gray-400">Digital Track A Command Center</span>
+            <span className="text-xs sm:text-sm font-bold bg-gray-800 px-2 py-0.5 rounded">Executive Back-Office</span>
+            <span className="text-xs text-gray-400 hidden md:inline">Digital Track A Command Center</span>
           </div>
-          <div className="flex items-center gap-4 text-xs">
-            <span className="text-gray-300">Role: {user?.role ? user.role.toUpperCase() : 'ADVISOR / ADMIN'}</span>
-            <Link to="/backoffice/kyc-queue" className="text-amber-400 hover:underline">
-              KYC Review Queue →
+          <div className="flex items-center gap-3 text-xs">
+            <span className="text-gray-300 hidden sm:inline">Role: {user?.role ? user.role.toUpperCase() : 'ADVISOR / ADMIN'}</span>
+            <Link to="/backoffice/kyc-queue" className="text-amber-400 hover:underline font-medium">
+              KYC Queue →
             </Link>
-            <Link to="/quotes" className="text-red-400 hover:underline">
+            <Link to="/quotes" className="text-red-400 hover:underline font-medium">
               Advisor Portal
             </Link>
           </div>
@@ -80,10 +80,10 @@ export default function BackOfficeDashboard() {
           </div>
 
           {/* Tab Navigation */}
-          <div className="flex items-center bg-gray-200 p-1 rounded-xl text-xs font-semibold">
+          <div className="flex items-center bg-gray-200 p-1 rounded-xl text-xs font-semibold overflow-x-auto max-w-full">
             <button
               onClick={() => setTab('funnel')}
-              className={`px-4 py-2 rounded-lg transition ${
+              className={`px-3 sm:px-4 py-2 rounded-lg transition shrink-0 ${
                 tab === 'funnel' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'
               }`}
             >
@@ -91,7 +91,7 @@ export default function BackOfficeDashboard() {
             </button>
             <button
               onClick={() => setTab('unclosed')}
-              className={`px-4 py-2 rounded-lg transition ${
+              className={`px-3 sm:px-4 py-2 rounded-lg transition shrink-0 ${
                 tab === 'unclosed' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'
               }`}
             >
@@ -99,7 +99,7 @@ export default function BackOfficeDashboard() {
             </button>
             <button
               onClick={() => setTab('commercials')}
-              className={`px-4 py-2 rounded-lg transition ${
+              className={`px-3 sm:px-4 py-2 rounded-lg transition shrink-0 ${
                 tab === 'commercials' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'
               }`}
             >

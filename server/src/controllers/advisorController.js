@@ -4,21 +4,25 @@ import { Conversation } from '../models/index.js';
 import AppError from '../utils/AppError.js';
 
 const chatSchema = z.object({
-  conversationId: z.string().optional(),
+  conversationId: z.string().nullish(),
+  sessionSecret: z.string().nullish(),
   message: z.string().min(1, 'Message cannot be empty'),
   language: z.string().optional().default('en'),
 });
 
 export async function handleAdvisorChat(req, res, next) {
   try {
-    const { conversationId, message, language } = chatSchema.parse(req.body);
-    const userId = req.user._id;
+    const { conversationId, sessionSecret, message, language } = chatSchema.parse(req.body);
+    const headerSecret = req.headers['x-session-secret'];
+    const effectiveSecret = sessionSecret || headerSecret;
+    const userId = req.user?._id;
 
     const result = await processAdvisorMessage({
       conversationId,
       userId,
       messageText: message,
       language,
+      sessionSecret: effectiveSecret,
     });
 
     res.status(200).json({
@@ -38,8 +42,17 @@ export async function handleGetConversation(req, res, next) {
     }
 
     // Role scoping: Owner can only view their own conversation
-    if (req.user.role === 'owner' && conversation.userId.toString() !== req.user._id.toString()) {
-      throw new AppError('Forbidden: Access denied to this conversation', 403, 'FORBIDDEN');
+    if (req.user.role === 'owner') {
+      if (conversation.userId) {
+        if (conversation.userId.toString() !== req.user._id.toString()) {
+          throw new AppError('Forbidden: Access denied to this conversation', 403, 'FORBIDDEN');
+        }
+      } else if (conversation.sessionSecret) {
+        const headerSecret = req.headers['x-session-secret'];
+        if (headerSecret !== conversation.sessionSecret) {
+          throw new AppError('Forbidden: Access denied to this conversation', 403, 'FORBIDDEN');
+        }
+      }
     }
 
     res.status(200).json({

@@ -1,14 +1,15 @@
 import { Router } from 'express';
 import { handleAdvisorChat, handleGetConversation } from '../controllers/advisorController.js';
-import { requireAuth } from '../middleware/auth.js';
+import { requireAuth, optionalAuth } from '../middleware/auth.js';
 import { requireRole } from '../middleware/rbac.js';
 import { advisorLimiter } from '../middleware/rateLimiters.js';
 
 const router = Router();
 
-router.use(requireAuth);
+// Allow guests or authenticated users to chat with the advisor
+router.post('/chat', optionalAuth, advisorLimiter, handleAdvisorChat);
 
-router.post('/chat', advisorLimiter, requireRole('owner', 'advisor', 'admin'), handleAdvisorChat);
-router.get('/conversations/:id', requireRole('owner', 'advisor', 'admin'), handleGetConversation);
+// Conversation retrieval requires authentication
+router.get('/conversations/:id', requireAuth, requireRole('owner', 'advisor', 'admin'), handleGetConversation);
 
 export default router;

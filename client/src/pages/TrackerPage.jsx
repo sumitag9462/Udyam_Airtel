@@ -1,15 +1,18 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams, useParams, Link } from 'react-router-dom';
 import OrderTimeline from '../features/tracker/OrderTimeline.jsx';
 import SlotPicker from '../features/tracker/SlotPicker.jsx';
 import SimulateAdvanceControl from '../features/tracker/SimulateAdvanceControl.jsx';
 import HelpModal from '../features/tracker/HelpModal.jsx';
+import Navbar from '../components/Navbar.jsx';
+import Footer from '../components/Footer.jsx';
 import { createOrderFromQuote, getOrder, listOrders } from '../features/tracker/api.js';
 
 export default function TrackerPage() {
+  const { id: routeOrderId, orderId: routeParamOrderId } = useParams();
   const [searchParams] = useSearchParams();
   const quoteId = searchParams.get('quoteId') || null;
-  const orderParam = searchParams.get('orderId') || null;
+  const orderParam = routeOrderId || routeParamOrderId || searchParams.get('orderId') || null;
 
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -49,27 +52,7 @@ export default function TrackerPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Top Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
-        <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
-            <span className="text-xl font-black text-red-600 tracking-tight">airtel</span>
-            <span className="text-sm font-bold bg-gray-900 text-white px-2 py-0.5 rounded">Udyam One</span>
-          </Link>
-          <div className="flex items-center gap-4 text-xs">
-            <button
-              type="button"
-              onClick={() => setShowHelpModal(true)}
-              className="text-red-600 font-semibold hover:underline flex items-center gap-1"
-            >
-              💬 Need Help?
-            </button>
-            <Link to="/quotes" className="text-gray-500 hover:text-gray-700">
-              Quotes
-            </Link>
-          </div>
-        </div>
-      </header>
+      <Navbar />
 
       {/* Main Container */}
       <main className="flex-1 max-w-4xl w-full mx-auto px-4 py-8">
@@ -145,6 +128,8 @@ export default function TrackerPage() {
           onClose={() => setShowHelpModal(false)}
         />
       )}
+
+      <Footer />
     </div>
   );
 }

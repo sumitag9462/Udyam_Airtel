@@ -28,11 +28,16 @@ export const useAuthStore = create((set) => ({
     return data;
   },
 
-  verifyOtp: async (phone, code) => {
+  verifyOtp: async (phone, code, metadata = {}) => {
     set({ error: null });
     const data = await apiRequest('/auth/otp/verify', {
       method: 'POST',
-      body: JSON.stringify({ phone, code }),
+      body: JSON.stringify({
+        phone,
+        code,
+        ...(metadata?.conversationId ? { conversationId: metadata.conversationId } : {}),
+        ...(metadata?.sessionSecret ? { sessionSecret: metadata.sessionSecret } : {}),
+      }),
     });
     if (data.csrfToken) {
       localStorage.setItem('csrf_token', data.csrfToken);

@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { apiRequest } from '../api/client.js';
+import Navbar from '../components/Navbar.jsx';
+import Footer from '../components/Footer.jsx';
 
 export default function CheckoutPage() {
   const { quoteId } = useParams();
@@ -135,33 +137,20 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 pb-16">
-      {/* Navigation header */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-30">
-        <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center space-x-2">
-            <span className="text-xl font-bold text-red-600">Airtel</span>
-            <span className="text-xl font-semibold text-slate-800">Udyam One</span>
-          </Link>
-          <div className="flex items-center space-x-2 text-xs font-semibold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
-            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-            <span>Simulated Secure Checkout</span>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col">
+      <Navbar />
 
-      <main className="max-w-4xl mx-auto px-4 pt-8">
+      <main className="max-w-4xl w-full mx-auto px-4 py-8 flex-1">
         {/* Progress indicator */}
         <div className="mb-8">
           <div className="flex items-center justify-between text-xs font-medium text-slate-500 mb-2">
-            <span>1. Advisor Needs</span>
-            <span>2. Transparent Quote</span>
+            <span className="text-emerald-700 font-semibold">✓ 1. Quote Locked</span>
+            <span className="text-emerald-700 font-semibold">✓ 2. Smart KYC Verified</span>
             <span className="text-red-600 font-bold">3. E-Sign & Checkout</span>
-            <span>4. Smart KYC</span>
-            <span>5. Track Delivery</span>
+            <span>4. Track Delivery</span>
           </div>
           <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-            <div className="bg-red-600 h-full w-3/5 rounded-full transition-all duration-500"></div>
+            <div className="bg-red-600 h-full w-3/4 rounded-full transition-all duration-500"></div>
           </div>
         </div>
 
@@ -359,6 +348,8 @@ export default function CheckoutPage() {
           </div>
         </div>
       </main>
+
+      <Footer />
     </div>
   );
 }

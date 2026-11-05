@@ -1,8 +1,35 @@
-export default function TierCards({ tiers, selectedTier, onSelectTier, loading }) {
+import { Link } from 'react-router-dom';
+
+export default function TierCards({ tiers, selectedTier, onSelectTier, loading, onExploreDefault, budgetMonthly }) {
   if (!tiers || tiers.length === 0) {
     return (
-      <div className="p-8 text-center bg-gray-50 border border-divider rounded">
-        <p className="text-secondary text-sm">No recommended tiers available for this profile.</p>
+      <div className="p-8 text-center bg-gray-50 border border-divider rounded-lg max-w-xl mx-auto my-6 space-y-4">
+        <div className="w-12 h-12 rounded-full bg-red-50 text-airtel-red flex items-center justify-center mx-auto text-xl font-bold">
+          !
+        </div>
+        <div>
+          <h3 className="text-base font-bold text-primary">Personalized Business Setup Required</h3>
+          <p className="text-secondary text-xs mt-1.5 leading-relaxed">
+            We need a few details about your business (such as type, location, and team size) to calculate eligible Airtel Business bundles and accurate pricing.
+          </p>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+          <Link
+            to="/advisor"
+            className="btn-primary text-xs py-2.5 px-4 font-semibold inline-block text-center rounded"
+          >
+            Start Guided Setup →
+          </Link>
+          {onExploreDefault && (
+            <button
+              type="button"
+              onClick={onExploreDefault}
+              className="btn-secondary text-xs py-2.5 px-4 font-semibold rounded"
+            >
+              Explore Standard Plans
+            </button>
+          )}
+        </div>
       </div>
     );
   }
@@ -12,16 +39,19 @@ export default function TierCards({ tiers, selectedTier, onSelectTier, loading }
       tag: 'Essentials',
       desc: 'High-speed business connectivity for daily digital operations.',
       badgeBg: 'bg-gray-100 text-gray-800',
+      why: 'Covers 100 Mbps Biz Fibre (₹999) + requested Cloud Email (₹1,750) and 1TB Backup (₹499). Foundation package.',
     },
     standard: {
       tag: 'Recommended',
       desc: 'Connectivity combined with security, cloud tools, and productivity suite.',
       badgeBg: 'bg-red-50 text-airtel-red border border-red-200',
+      why: 'Includes Starter (₹3,248) + Endpoint Security (₹1,386). Comprehensive protection within ₹5,000 budget.',
     },
     resilient: {
       tag: 'High Availability',
       desc: 'Engineered for mission-critical operations with backup redundancy.',
       badgeBg: 'bg-emerald-50 text-emerald-800 border border-emerald-200',
+      why: 'Includes Standard (₹4,634) + 4G Auto-Failover (₹499/mo). Zero downtime during fibre cuts. +₹133 over budget.',
     },
   };
 
@@ -32,8 +62,11 @@ export default function TierCards({ tiers, selectedTier, onSelectTier, loading }
           tag: tier.tierLabel,
           desc: 'Customized business solution bundle.',
           badgeBg: 'bg-gray-100 text-gray-800',
+          why: 'Calculated by Airtel rules engine from verified catalogue line items.',
         };
         const isSelected = selectedTier === tier.tierLabel;
+        const isOverBudget = budgetMonthly && tier.monthlyTotal > budgetMonthly;
+        const budgetDiff = isOverBudget ? tier.monthlyTotal - budgetMonthly : 0;
 
         return (
           <div
@@ -45,10 +78,19 @@ export default function TierCards({ tiers, selectedTier, onSelectTier, loading }
             }`}
           >
             <div>
-              <div className="flex justify-between items-start mb-2">
+              <div className="flex justify-between items-start mb-2 gap-1 flex-wrap">
                 <span className={`text-xs font-semibold px-2 py-0.5 rounded ${meta.badgeBg}`}>
                   {meta.tag}
                 </span>
+                {isOverBudget ? (
+                  <span className="text-[11px] bg-amber-100 text-amber-900 px-2 py-0.5 rounded font-semibold border border-amber-200">
+                    +₹{budgetDiff.toLocaleString('en-IN')}/mo over budget
+                  </span>
+                ) : budgetMonthly ? (
+                  <span className="text-[11px] bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded font-medium border border-emerald-200">
+                    Within budget
+                  </span>
+                ) : null}
                 {tier.indicativeOnly && (
                   <span
                     className="text-[11px] bg-amber-100 text-amber-900 px-2 py-0.5 rounded font-medium"
@@ -89,8 +131,14 @@ export default function TierCards({ tiers, selectedTier, onSelectTier, loading }
                 </div>
               </div>
 
+              {/* Why this price explanation */}
+              <div className="mt-3.5 p-2.5 bg-gray-50 border border-divider rounded text-[11px] text-secondary leading-snug">
+                <strong className="text-primary block mb-0.5">Why this price?</strong>
+                {meta.why}
+              </div>
+
               {/* Line items preview */}
-              <div className="mt-5 pt-3 border-t border-divider">
+              <div className="mt-4 pt-3 border-t border-divider">
                 <p className="text-xs font-semibold uppercase tracking-wider text-secondary mb-2">
                   Included in this plan:
                 </p>

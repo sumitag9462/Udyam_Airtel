@@ -64,7 +64,10 @@ export async function createOrder({ quoteId, userId, idempotencyKey, leadId = nu
     return existing;
   }
 
-  const quote = await Quote.findOne({ quoteId });
+  const quoteQuery = mongoose.isValidObjectId(quoteId)
+    ? { $or: [{ _id: quoteId }, { quoteId }] }
+    : { quoteId };
+  const quote = await Quote.findOne(quoteQuery);
   if (!quote) {
     throw new OrderError('Quote not found', 'QUOTE_NOT_FOUND', 404);
   }

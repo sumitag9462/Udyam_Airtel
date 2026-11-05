@@ -5,13 +5,17 @@ const conversationSchema = new mongoose.Schema(
     leadId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Lead',
-      required: true,
+      required: false,
       index: true,
     },
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: true,
+      required: false,
+      index: true,
+    },
+    sessionSecret: {
+      type: String,
       index: true,
     },
     language: {

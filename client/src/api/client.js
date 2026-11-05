@@ -6,7 +6,23 @@ export function getCookie(name) {
   return match ? decodeURIComponent(match[2]) : null;
 }
 
-const API_BASE = '/api/v1';
+export function getApiBase() {
+  if (typeof window !== 'undefined' && window.__UDYAM_API_URL__) {
+    return window.__UDYAM_API_URL__;
+  }
+  if (typeof import.meta !== 'undefined' && import.meta.env) {
+    if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
+    if (import.meta.env.VITE_API_BASE) return import.meta.env.VITE_API_BASE;
+  }
+  if (typeof window !== 'undefined' && window.location) {
+    if (window.location.port === '5173' || window.location.port === '4173') {
+      return `${window.location.protocol}//${window.location.hostname}:3001/api/v1`;
+    }
+  }
+  return '/api/v1';
+}
+
+const API_BASE = getApiBase();
 
 let isRefreshing = false;
 let refreshSubscribers = [];
@@ -38,6 +54,14 @@ export async function apiRequest(endpoint, options = {}) {
     const csrfToken = getCookie('csrf_token') || localStorage.getItem('csrf_token');
     if (csrfToken && !headers.has('X-CSRF-Token')) {
       headers.set('X-CSRF-Token', csrfToken);
+    }
+  }
+
+  // Include guest session secret if active
+  if (typeof window !== 'undefined' && window.sessionStorage) {
+    const sSecret = sessionStorage.getItem('udyam_advisor_sessionSecret');
+    if (sSecret && !headers.has('X-Session-Secret')) {
+      headers.set('X-Session-Secret', sSecret);
     }
   }
 
@@ -93,20 +117,29 @@ export async function apiRequest(endpoint, options = {}) {
   }
 
   let body;
-  const contentType = response.headers.get('content-type');
-  if (contentType && contentType.includes('application/json')) {
+  const contentType = response.headers.get('content-type') || '';
+  if (contentType.includes('application/json')) {
     body = await response.json();
   } else {
-    body = { ok: response.ok, data: await response.text() };
+    const rawText = await response.text();
+    // Detect HTML responses (e.g. SPA fallback from static servers)
+    if (rawText.trim().toLowerCase().startsWith('<!doctype') || rawText.trim().toLowerCase().startsWith('<html')) {
+      throw new Error(`API endpoint '${endpoint}' returned HTML instead of JSON. Ensure the backend server is reachable on port 3001.`);
+    }
+    try {
+      body = JSON.parse(rawText);
+    } catch {
+      body = { ok: response.ok, data: rawText };
+    }
   }
 
-  if (!response.ok) {
-    const error = new Error(body?.error?.message || 'Request failed');
+  if (!response.ok || (body && body.ok === false)) {
+    const error = new Error(body?.error?.message || body?.message || 'Request failed');
     error.status = response.status;
     error.code = body?.error?.code || 'UNKNOWN_ERROR';
     error.details = body?.error?.details;
     throw error;
   }
 
-  return body.data;
+  return body?.data !== undefined ? body.data : body;
 }

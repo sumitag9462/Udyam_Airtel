@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore.js';
+import Navbar from '../components/Navbar.jsx';
+import Footer from '../components/Footer.jsx';
 import TierCards from '../features/quotes/TierCards.jsx';
 import QuoteConfigurator from '../features/quotes/QuoteConfigurator.jsx';
 import BusinessPreview from '../features/quotes/BusinessPreview.jsx';
@@ -16,6 +18,7 @@ import {
 export default function QuotePage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, isAuthenticated, logout } = useAuthStore();
 
   const [catalogue, setCatalogue] = useState([]);
@@ -32,12 +35,29 @@ export default function QuotePage() {
     businessName: 'Law Firm & Associates',
     businessType: 'CA / Law office',
     segment: 'prof',
-    employeeCount: 5,
+    employeeCount: 14,
     numSites: 1,
     city: 'Delhi',
     cityTier: 1,
     hasGstin: true,
+    mustHaves: ['email', 'cloud_backup'],
+    budgetMonthly: 5000,
   };
+
+  const getActiveProfile = () => {
+    if (location.state?.profile && location.state.profile.businessType) {
+      return location.state.profile;
+    }
+    try {
+      const saved = JSON.parse(sessionStorage.getItem('udyam_advisor_profile') || 'null');
+      if (saved && (saved.businessType || saved.city)) return saved;
+    } catch {
+      // ignore
+    }
+    return defaultProfile;
+  };
+
+  const currentProfile = getActiveProfile();
 
   // Initial data loading
   useEffect(() => {
@@ -60,18 +80,38 @@ export default function QuotePage() {
             setActiveTier(qRes.quote.tierLabel);
           }
         } else {
-          // 3. Otherwise compute 3 tiers for default profile
-          const bundlesRes = await fetchBundles(defaultProfile);
+          // 3. Otherwise compute 3 tiers for profile
+          const preferredTier = location.state?.tier || sessionStorage.getItem('udyam_selected_tier') || 'standard';
+          if (isMounted) setActiveTier(preferredTier);
+
+          const bundlesRes = await fetchBundles(currentProfile);
           if (isMounted) {
-            setTiers(bundlesRes.tiers || []);
+            const returnedTiers = bundlesRes.tiers || [];
+            setTiers(returnedTiers);
+
             // Create initial draft quote with recommended Standard tier
             if (isAuthenticated) {
               const draftRes = await createQuote({
-                tierLabel: 'standard',
-                profile: defaultProfile,
+                tierLabel: preferredTier,
+                profile: currentProfile,
               });
               setQuote(draftRes.quote);
-              setActiveTier('standard');
+            } else {
+              // Local preview quote so guests can inspect line items
+              const selectedTierData = returnedTiers.find((t) => t.tierLabel === preferredTier) || returnedTiers[0];
+              if (selectedTierData) {
+                setQuote({
+                  quoteId: 'DRAFT-PREVIEW',
+                  tierLabel: selectedTierData.tierLabel,
+                  monthlyTotal: selectedTierData.monthlyTotal,
+                  setupTotal: selectedTierData.setupTotal,
+                  contractMonths: selectedTierData.contractMonths,
+                  firstYearTotal: selectedTierData.firstYearTotal,
+                  lineItems: selectedTierData.lineItems,
+                  status: 'draft',
+                  profileSnapshot: currentProfile,
+                });
+              }
             }
           }
         }
@@ -94,13 +134,29 @@ export default function QuotePage() {
       setUpdating(true);
       setError(null);
       setActiveTier(tierLabel);
+      sessionStorage.setItem('udyam_selected_tier', tierLabel);
 
       if (isAuthenticated) {
         const draftRes = await createQuote({
           tierLabel,
-          profile: quote?.profileSnapshot || defaultProfile,
+          profile: quote?.profileSnapshot || currentProfile,
         });
         setQuote(draftRes.quote);
+      } else {
+        const selectedTierData = tiers.find((t) => t.tierLabel === tierLabel);
+        if (selectedTierData) {
+          setQuote({
+            quoteId: 'DRAFT-PREVIEW',
+            tierLabel: selectedTierData.tierLabel,
+            monthlyTotal: selectedTierData.monthlyTotal,
+            setupTotal: selectedTierData.setupTotal,
+            contractMonths: selectedTierData.contractMonths,
+            firstYearTotal: selectedTierData.firstYearTotal,
+            lineItems: selectedTierData.lineItems,
+            status: 'draft',
+            profileSnapshot: currentProfile,
+          });
+        }
       }
     } catch (err) {
       setError(err.message || 'Failed to apply tier.');
@@ -112,6 +168,12 @@ export default function QuotePage() {
   // Update line items in quote
   const handleUpdateItems = async (newLineItems) => {
     if (!quote) return;
+    if (!isAuthenticated || quote.quoteId === 'DRAFT-PREVIEW') {
+      navigate('/login', {
+        state: { from: `/quotes${id ? `/${id}` : ''}`, profile: currentProfile, tier: activeTier },
+      });
+      return;
+    }
     try {
       setUpdating(true);
       setError(null);
@@ -124,45 +186,34 @@ export default function QuotePage() {
     }
   };
 
+  const handleAcceptClick = () => {
+    if (!isAuthenticated) {
+      navigate('/login', {
+        state: { from: `/quotes${id ? `/${id}` : ''}`, profile: currentProfile, tier: activeTier },
+      });
+      return;
+    }
+    setIsAcceptModalOpen(true);
+  };
+
+  const handleExploreDefault = async () => {
+    try {
+      setLoading(true);
+      const bundlesRes = await fetchBundles(defaultProfile);
+      setTiers(bundlesRes.tiers || []);
+      setActiveTier('standard');
+    } catch (err) {
+      setError(err.message || 'Failed to calculate standard plans.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const isImmutable = quote?.status === 'accepted';
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Top Navigation */}
-      <header className="bg-white border-b border-divider sticky top-0 z-40">
-        <div className="container-admin h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
-            <span className="font-extrabold text-lg text-primary">
-              <span className="text-airtel-red">Airtel</span> Udyam One
-            </span>
-          </Link>
-
-          <div className="flex items-center gap-4 text-xs">
-            {isAuthenticated ? (
-              <>
-                <span className="text-secondary hidden sm:inline">
-                  Signed in as <strong>{user?.phoneLast4 ? `••••${user.phoneLast4}` : user?.email}</strong> ({user?.role})
-                </span>
-                <button
-                  type="button"
-                  onClick={logout}
-                  className="btn-secondary py-1.5 px-3 text-xs"
-                >
-                  Logout
-                </button>
-              </>
-            ) : (
-              <button
-                type="button"
-                onClick={() => navigate('/login')}
-                className="btn-primary py-1.5 px-3 text-xs"
-              >
-                Sign In
-              </button>
-            )}
-          </div>
-        </div>
-      </header>
+      <Navbar />
 
       {/* Main Workspace */}
       <main className="container-admin py-8 space-y-8 flex-1">
@@ -186,10 +237,10 @@ export default function QuotePage() {
               {!isImmutable && (
                 <button
                   type="button"
-                  onClick={() => setIsAcceptModalOpen(true)}
+                  onClick={handleAcceptClick}
                   className="btn-primary text-xs py-2.5 px-4 font-semibold"
                 >
-                  Accept Quote →
+                  {isAuthenticated ? 'Accept Quote →' : 'Sign In to Accept Quote →'}
                 </button>
               )}
             </div>
@@ -221,6 +272,8 @@ export default function QuotePage() {
                 selectedTier={activeTier}
                 onSelectTier={handleSelectTier}
                 loading={updating}
+                onExploreDefault={handleExploreDefault}
+                budgetMonthly={currentProfile?.budgetMonthly}
               />
             </section>
 
@@ -265,6 +318,8 @@ export default function QuotePage() {
           }}
         />
       )}
+
+      <Footer />
     </div>
   );
 }

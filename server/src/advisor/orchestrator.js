@@ -11,22 +11,58 @@ import logger from '../config/logger.js';
 /**
  * Orchestrate a conversational turn with the Udyam One advisor.
  */
-export async function processAdvisorMessage({ conversationId, userId, messageText, language = 'en' }) {
+export async function processAdvisorMessage({
+  conversationId,
+  userId,
+  messageText,
+  language = 'en',
+  sessionSecret,
+}) {
   let conversation;
 
   if (conversationId) {
     conversation = await Conversation.findById(conversationId);
+    if (conversation) {
+      // Ownership and session isolation check
+      if (conversation.userId) {
+        if (!userId || conversation.userId.toString() !== userId.toString()) {
+          const err = new Error('Forbidden: Access denied to this conversation');
+          err.statusCode = 403;
+          err.code = 'FORBIDDEN';
+          throw err;
+        }
+      } else {
+        // Guest conversation: verify sessionSecret if set
+        if (conversation.sessionSecret && sessionSecret && sessionSecret !== conversation.sessionSecret) {
+          const err = new Error('Forbidden: Invalid session secret');
+          err.statusCode = 403;
+          err.code = 'FORBIDDEN';
+          throw err;
+        }
+        // If user is authenticated, claim this conversation
+        if (userId) {
+          conversation.userId = userId;
+          if (conversation.leadId) {
+            await Lead.findByIdAndUpdate(conversation.leadId, { ownerUserId: userId });
+          }
+        }
+      }
+    }
   }
 
   // If no conversation found or provided, create new one
   if (!conversation) {
+    const generatedSecret = crypto.randomBytes(16).toString('hex');
     // Ensure user has an associated lead
-    let lead = await Lead.findOne({ ownerUserId: userId });
+    let lead = null;
+    if (userId) {
+      lead = await Lead.findOne({ ownerUserId: userId });
+    }
     if (!lead) {
       lead = await Lead.create({
         leadId: `LEAD-${crypto.randomBytes(3).toString('hex').toUpperCase()}`,
         origin: 'live',
-        ownerUserId: userId,
+        ...(userId ? { ownerUserId: userId } : {}),
         businessName: 'Prospective Business',
         businessType: 'General SMB',
         segment: 'micro',
@@ -47,7 +83,8 @@ export async function processAdvisorMessage({ conversationId, userId, messageTex
 
     conversation = await Conversation.create({
       leadId: lead._id,
-      userId,
+      ...(userId ? { userId } : {}),
+      sessionSecret: generatedSecret,
       language,
       state: 'GREETING',
       questionCount: 0,
@@ -70,8 +107,8 @@ export async function processAdvisorMessage({ conversationId, userId, messageTex
   // Prepare context
   const context = {
     conversationId: conversation._id.toString(),
-    leadId: conversation.leadId.toString(),
-    userId: userId.toString(),
+    leadId: conversation.leadId?.toString(),
+    userId: userId ? userId.toString() : null,
     state: conversation.state,
     profile: conversation.profile?.toObject?.() || conversation.profile || {},
     questionCount: conversation.questionCount,
@@ -186,6 +223,7 @@ export async function processAdvisorMessage({ conversationId, userId, messageTex
 
   return {
     conversationId: conversation._id.toString(),
+    sessionSecret: conversation.sessionSecret,
     reply: sanitizedText,
     state: conversation.state,
     questionCount: conversation.questionCount,

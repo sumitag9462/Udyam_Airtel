@@ -6,6 +6,7 @@ import {
   rotateRefreshToken,
   revokeToken,
 } from '../services/authService.js';
+import { Conversation, Lead } from '../models/index.js';
 import { config } from '../config/env.js';
 
 const isProduction = config.NODE_ENV === 'production';
@@ -67,12 +68,33 @@ export async function handleOtpRequest(req, res, next) {
 const otpVerifySchema = z.object({
   phone: z.string().min(10),
   code: z.string().length(6, 'OTP must be 6 digits'),
+  conversationId: z.string().optional(),
+  sessionSecret: z.string().optional(),
 });
 
 export async function handleOtpVerify(req, res, next) {
   try {
-    const { phone, code } = otpVerifySchema.parse(req.body);
+    const { phone, code, conversationId, sessionSecret } = otpVerifySchema.parse(req.body);
     const result = await verifyOtp(phone, code);
+
+    // If an active anonymous advisor session was passed, securely claim it for this user
+    if (conversationId) {
+      try {
+        const conv = await Conversation.findById(conversationId);
+        if (conv && (!conv.userId || conv.userId.toString() === result.user._id.toString())) {
+          if (!conv.sessionSecret || (sessionSecret && sessionSecret === conv.sessionSecret)) {
+            conv.userId = result.user._id;
+            await conv.save();
+            if (conv.leadId) {
+              await Lead.findByIdAndUpdate(conv.leadId, { ownerUserId: result.user._id });
+            }
+          }
+        }
+      } catch {
+        // Non-blocking for login flow
+      }
+    }
+
     setAuthCookies(res, result.tokens);
     res.status(200).json({
       ok: true,

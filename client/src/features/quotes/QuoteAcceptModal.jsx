@@ -7,8 +7,13 @@ export default function QuoteAcceptModal({ quote, isOpen, onClose, onAccepted })
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [accepted, setAccepted] = useState(false);
+  const [budgetOverrideApproved, setBudgetOverrideApproved] = useState(false);
 
   if (!isOpen) return null;
+
+  const userBudget = quote?.profileSnapshot?.budgetMonthly || 5000;
+  const isOverBudget = quote ? quote.monthlyTotal > userBudget : false;
+  const budgetDiff = isOverBudget ? quote.monthlyTotal - userBudget : 0;
 
   const handleConfirmAccept = async () => {
     setError(null);
@@ -73,6 +78,27 @@ export default function QuoteAcceptModal({ quote, isOpen, onClose, onAccepted })
               </div>
             </div>
 
+            {isOverBudget && (
+              <div className="p-3.5 bg-amber-50 border border-amber-300 rounded-lg text-xs space-y-2">
+                <div className="flex items-center gap-1.5 text-amber-900 font-bold">
+                  <span>⚠️</span>
+                  <span>Target Budget Override Required</span>
+                </div>
+                <p className="text-amber-800 leading-snug">
+                  This plan of <strong>₹{quote.monthlyTotal.toLocaleString('en-IN')}/mo</strong> exceeds your stated monthly budget of <strong>₹{userBudget.toLocaleString('en-IN')}/mo</strong> by <strong>+₹{budgetDiff.toLocaleString('en-IN')}/mo</strong>.
+                </p>
+                <label className="flex items-start gap-2 pt-1 font-medium text-amber-950 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={budgetOverrideApproved}
+                    onChange={(e) => setBudgetOverrideApproved(e.target.checked)}
+                    className="mt-0.5 rounded text-airtel-red focus:ring-airtel-red"
+                  />
+                  <span>I understand and explicitly approve this package exceeding my initial target budget.</span>
+                </label>
+              </div>
+            )}
+
             {error && (
               <div className="p-3 bg-red-50 border border-red-200 text-dark-red text-xs rounded">
                 {error}
@@ -94,9 +120,11 @@ export default function QuoteAcceptModal({ quote, isOpen, onClose, onAccepted })
               </button>
               <button
                 type="button"
-                disabled={loading}
+                disabled={loading || (isOverBudget && !budgetOverrideApproved)}
                 onClick={handleConfirmAccept}
-                className="btn-primary text-xs py-2 px-5"
+                className={`btn-primary text-xs py-2 px-5 ${
+                  isOverBudget && !budgetOverrideApproved ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
               >
                 {loading ? 'Locking Pricing...' : 'Confirm & Proceed'}
               </button>
