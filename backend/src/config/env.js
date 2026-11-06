@@ -44,6 +44,8 @@ const envSchema = z
 
     OTP_MODE: z.enum(['simulated']).default('simulated'),
 
+    OCR_PROVIDER: z.enum(['mock', 'tesseract']).default('mock'),
+
     LLM_PROVIDER: z.enum(['anthropic', 'mock']).default('mock'),
 
     ANTHROPIC_API_KEY: z.string().optional(),
