@@ -11,6 +11,9 @@ import { Order } from '../models/index.js';
 const createOrderSchema = z.object({
   quoteId: z.string().min(1),
   leadId: z.string().optional(),
+  paymentMethod: z.string().optional(),
+  signatoryName: z.string().optional(),
+  signedAt: z.string().optional(),
 });
 
 const slotSchema = z.object({
@@ -42,6 +45,9 @@ export async function handleCreateOrder(req, res, next) {
       leadId: data.leadId,
       userId,
       idempotencyKey,
+      paymentMethod: data.paymentMethod,
+      signatoryName: data.signatoryName,
+      signedAt: data.signedAt,
     });
 
     res.status(201).json({

@@ -28,15 +28,17 @@ export default function CheckoutPage() {
       try {
         setLoading(true);
         const res = await apiRequest(`/quotes/${quoteId}`);
-        if (res.ok && res.data?.quote) {
-          setQuote(res.data.quote);
+        const loadedQuote = res?.quote || res?.data?.quote || (res?._id || res?.quoteId ? res : null);
+        if (loadedQuote) {
+          setQuote(loadedQuote);
         } else {
           // Fallback demo quote if specific id isn't in DB
           setQuote({
             _id: quoteId,
             quoteNumber: `Q-${Date.now().toString(36).toUpperCase()}`,
+            quoteId: quoteId,
             monthlyTotal: 4634,
-            oneTimeSetup: 2500,
+            setupTotal: 2500,
             contractMonths: 12,
             businessName: 'Apex Enterprise',
             items: [
@@ -52,8 +54,9 @@ export default function CheckoutPage() {
         setQuote({
           _id: quoteId,
           quoteNumber: `Q-DEMO-${quoteId ? quoteId.slice(-6).toUpperCase() : '001'}`,
+          quoteId: quoteId,
           monthlyTotal: 4634,
-          oneTimeSetup: 2500,
+          setupTotal: 2500,
           contractMonths: 12,
           businessName: 'Enterprise Client',
           items: [
@@ -68,6 +71,12 @@ export default function CheckoutPage() {
     }
     loadQuote();
   }, [quoteId]);
+
+  const recurringMonthly = quote?.monthlyTotal || 0;
+  const oneTimeSetup = quote?.setupTotal ?? quote?.oneTimeSetup ?? 0;
+  const subtotal = recurringMonthly + oneTimeSetup;
+  const gst = Math.round(subtotal * 0.18);
+  const dueToday = subtotal + gst;
 
   const handleProcessPayment = async () => {
     if (!agreedTerms) {
@@ -96,12 +105,12 @@ export default function CheckoutPage() {
 
     // Attempt real order creation via API
     try {
-      const idempotencyKey = `order-checkout-${quoteId}-${Date.now()}`;
+      const idempotencyKey = `order-checkout-${quote?.quoteId || quote?._id || quoteId}-${Date.now()}`;
       const orderRes = await apiRequest('/orders', {
         method: 'POST',
         headers: { 'Idempotency-Key': idempotencyKey },
         body: JSON.stringify({
-          quoteId: quote._id || quoteId,
+          quoteId: quote?._id || quote?.quoteId || quoteId,
           paymentMethod,
           signatoryName,
           signedAt: new Date().toISOString(),
@@ -111,17 +120,20 @@ export default function CheckoutPage() {
       setPaymentProcessing(false);
       setPaymentSuccess(true);
 
-      const orderId = orderRes.data?.order?._id || 'ORD-NEW';
-      setTimeout(() => {
-        navigate(`/orders/${orderId}`);
-      }, 1500);
-    } catch {
-      // If order creation fails, still show success transition for demo resilience
+      const realOrderId = orderRes?.orderId || orderRes?._id || orderRes?.data?.orderId || orderRes?.data?._id;
+      if (realOrderId) {
+        setTimeout(() => {
+          navigate(`/orders/${realOrderId}`);
+        }, 1200);
+      } else {
+        setTimeout(() => {
+          navigate('/tracker');
+        }, 1200);
+      }
+    } catch (err) {
       setPaymentProcessing(false);
-      setPaymentSuccess(true);
-      setTimeout(() => {
-        navigate('/tracker');
-      }, 1500);
+      setPaymentFailed(true);
+      setError(err?.message || 'Payment authorization or order creation failed. Please retry.');
     }
   };
 
@@ -169,8 +181,8 @@ export default function CheckoutPage() {
 
               <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 text-xs text-slate-700 space-y-2 mb-4 max-h-36 overflow-y-auto">
                 <p className="font-semibold text-slate-900">Enterprise Subscriber Agreement (Terms Summary):</p>
-                <p>1. <strong>Service Provisioning:</strong> Airtel will provision high-speed symmetric commercial broadband as specified in Quote #{quote?.quoteNumber || quoteId}.</p>
-                <p>2. <strong>Transparent Pricing:</strong> Monthly billing is locked at ₹{quote?.monthlyTotal?.toLocaleString()}/mo + applicable taxes. One-time setup fee of ₹{quote?.oneTimeSetup?.toLocaleString()} applies.</p>
+                <p>1. <strong>Service Provisioning:</strong> Airtel will provision high-speed symmetric commercial broadband as specified in Quote #{quote?.quoteNumber || quote?.quoteId || quoteId}.</p>
+                <p>2. <strong>Transparent Pricing:</strong> Monthly billing is locked at ₹{recurringMonthly.toLocaleString('en-IN')}/mo + applicable taxes. One-time setup fee of ₹{oneTimeSetup.toLocaleString('en-IN')} applies.</p>
                 <p>3. <strong>Contract Term:</strong> Minimum contract commitment is {quote?.contractMonths || 12} months from the verified date of optical light activation.</p>
                 <p>4. <strong>DPDP Compliance:</strong> Subscriber documents are encrypted via AES-256-GCM and retained strictly in accordance with TRAI/DoT subscriber verification guidelines.</p>
               </div>
@@ -292,7 +304,7 @@ export default function CheckoutPage() {
                 ) : paymentSuccess ? (
                   <span>✅ Payment Confirmed! Launching Order...</span>
                 ) : (
-                  <span>Sign Contract & Authorize Payment (₹{((quote?.monthlyTotal || 0) + (quote?.oneTimeSetup || 0)).toLocaleString()})</span>
+                  <span>Sign Contract & Authorize Payment (₹{dueToday.toLocaleString('en-IN')})</span>
                 )}
               </button>
             </div>
@@ -308,7 +320,7 @@ export default function CheckoutPage() {
               <div className="space-y-3 text-xs mb-4">
                 <div className="flex justify-between">
                   <span className="text-slate-600">Quote ID:</span>
-                  <span className="font-mono font-bold text-slate-800">{quote?.quoteNumber || quoteId}</span>
+                  <span className="font-mono font-bold text-slate-800">{quote?.quoteNumber || quote?.quoteId || quoteId}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-600">Contract Term:</span>
@@ -323,20 +335,20 @@ export default function CheckoutPage() {
               <div className="border-t border-slate-100 pt-3 space-y-2 text-xs">
                 <div className="flex justify-between text-slate-600">
                   <span>Recurring Monthly:</span>
-                  <span className="font-semibold text-slate-900">₹{quote?.monthlyTotal?.toLocaleString()}/mo</span>
+                  <span className="font-semibold text-slate-900">₹{recurringMonthly.toLocaleString('en-IN')}/mo</span>
                 </div>
                 <div className="flex justify-between text-slate-600">
                   <span>One-Time Installation:</span>
-                  <span className="font-semibold text-slate-900">₹{quote?.oneTimeSetup?.toLocaleString()}</span>
+                  <span className="font-semibold text-slate-900">₹{oneTimeSetup.toLocaleString('en-IN')}</span>
                 </div>
                 <div className="flex justify-between text-slate-600">
                   <span>Applicable GST (18%):</span>
-                  <span className="font-semibold text-slate-900">₹{Math.round(((quote?.monthlyTotal || 0) + (quote?.oneTimeSetup || 0)) * 0.18).toLocaleString()}</span>
+                  <span className="font-semibold text-slate-900">₹{gst.toLocaleString('en-IN')}</span>
                 </div>
                 <div className="border-t border-slate-200 pt-2 flex justify-between text-sm font-bold text-slate-900">
                   <span>Due Today:</span>
                   <span className="text-red-600">
-                    ₹{Math.round(((quote?.monthlyTotal || 0) + (quote?.oneTimeSetup || 0)) * 1.18).toLocaleString()}
+                    ₹{dueToday.toLocaleString('en-IN')}
                   </span>
                 </div>
               </div>

@@ -9,7 +9,12 @@ import { useAuthStore } from '../store/authStore.js';
 
 export default function KycPage() {
   const [searchParams] = useSearchParams();
-  const quoteId = searchParams.get('quoteId') || null;
+  const rawQuoteId = searchParams.get('quoteId');
+  const storedQuoteId = typeof window !== 'undefined' && window.sessionStorage ? sessionStorage.getItem('udyam_last_quote_id') : null;
+  const quoteId = rawQuoteId || storedQuoteId || null;
+  if (rawQuoteId && typeof window !== 'undefined' && window.sessionStorage) {
+    sessionStorage.setItem('udyam_last_quote_id', rawQuoteId);
+  }
   const leadId = searchParams.get('leadId') || null;
   const navigate = useNavigate();
 

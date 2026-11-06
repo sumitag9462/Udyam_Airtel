@@ -18,13 +18,14 @@ export default function PartnerDashboard() {
   const fetchTasks = async () => {
     try {
       const res = await apiRequest('/partner/tasks');
-      if (res.ok && res.data?.tasks?.length) {
-        setTasks(res.data.tasks);
+      const loadedTasks = res?.tasks || res?.data?.tasks || (Array.isArray(res) ? res : null);
+      if (loadedTasks && loadedTasks.length) {
+        setTasks(loadedTasks);
         if (routeTaskId) {
-          const match = res.data.tasks.find((t) => t.taskId === routeTaskId || t.orderId === routeTaskId);
-          setSelectedTask(match || res.data.tasks[0]);
+          const match = loadedTasks.find((t) => t.taskId === routeTaskId || t.orderId === routeTaskId);
+          setSelectedTask(match || loadedTasks[0]);
         } else {
-          setSelectedTask(res.data.tasks[0]);
+          setSelectedTask(loadedTasks[0]);
         }
       } else {
         // Fallback simulated partner tasks

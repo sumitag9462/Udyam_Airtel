@@ -7,7 +7,7 @@ import logger from '../config/logger.js';
 
 const router = Router();
 
-// Helper to resolve order by ObjectId, TSK-taskId, or orderNumber
+// Helper to resolve order by ObjectId, TSK-taskId, or orderId/orderNumber
 async function findOrderByIdOrTaskId(id) {
   if (mongoose.Types.ObjectId.isValid(id)) {
     return Order.findById(id);
@@ -17,7 +17,7 @@ async function findOrderByIdOrTaskId(id) {
     const orders = await Order.find().sort({ createdAt: -1 }).limit(100);
     return orders.find((o) => o._id.toString().toLowerCase().endsWith(suffix)) || null;
   }
-  return Order.findOne({ orderNumber: id });
+  return Order.findOne({ $or: [{ orderId: id }, { orderNumber: id }] });
 }
 
 // All partner routes require authentication and partner or admin role
@@ -45,10 +45,12 @@ router.get('/tasks', async (req, res, next) => {
     const tasks = orders.map((o) => ({
       taskId: `TSK-${o._id.toString().slice(-8).toUpperCase()}`,
       orderId: o._id,
-      orderNumber: o.orderNumber,
+      orderNumber: o.orderId || o.orderNumber || `ORD-${o._id.toString().slice(-6).toUpperCase()}`,
       status: o.status,
-      customerPhone: o.userId ? `•••• ••${o.userId.phoneLast4}` : '•••• ••••',
-      scheduledSlot: o.scheduledSlot,
+      customerPhone: o.userId ? `•••• ••${o.userId.phoneLast4 || '8888'}` : '•••• ••••',
+      scheduledSlot: o.selectedSlot?.timeWindow
+        ? `${new Date(o.selectedSlot.slotDate).toLocaleDateString()} (${o.selectedSlot.timeWindow})`
+        : (o.scheduledSlot || 'Pending Slot Selection'),
       siteAddress: o.installationAddress || 'Principal Place of Business',
       telemetry: o.telemetry || {
         opticalSignalDbm: -19.2,

@@ -2,14 +2,18 @@ import { useState } from 'react';
 import { uploadKycDocuments } from './api.js';
 
 const DEMO_SPECIMENS = [
-  { id: 'K03', label: 'Specimen K03 — Clean (Auto-Approved)', outcome: 'auto_approved' },
-  { id: 'K05', label: 'Specimen K05 — BALAJI REALTY LLP, No Udyam (Auto-Approved)', outcome: 'auto_approved' },
-  { id: 'K01', label: 'Specimen K01 — Cancelled GSTIN (Hard Blocker Reject)', outcome: 'rejected' },
-  { id: 'K04', label: 'Specimen K04 — Blurred GST Image (Human Review)', outcome: 'requires_review' },
-  { id: 'K07', label: 'Specimen K07 — Business Name Mismatch (Human Review)', outcome: 'requires_review' },
-  { id: 'K11', label: 'Specimen K11 — Expired Utility Bill > 90d (Reject)', outcome: 'rejected' },
-  { id: 'K06', label: 'Specimen K06 — Saffron Unisex Salon (Clean)', outcome: 'auto_approved' },
-  { id: 'K12', label: 'Specimen K12 — Star Electronics (Clean)', outcome: 'auto_approved' },
+  { id: 'K03', label: 'Specimen K03 — Ganesh Woodcraft (Clean / Auto-Approved)', outcome: 'auto_approved' },
+  { id: 'K01', label: 'Specimen K01 — Cancelled GSTIN (Hard Blocker / Rejected)', outcome: 'rejected' },
+  { id: 'K02', label: 'Specimen K02 — Corrupted Text Tokens (Human Review)', outcome: 'requires_review' },
+  { id: 'K04', label: 'Specimen K04 — Blurred GST Image (Laplacian < 50 / Review)', outcome: 'requires_review' },
+  { id: 'K05', label: 'Specimen K05 — Balaji Realty LLP, No Udyam (Clean / Auto-Approved)', outcome: 'auto_approved' },
+  { id: 'K06', label: 'Specimen K06 — Saffron Unisex Salon (Clean / Auto-Approved)', outcome: 'auto_approved' },
+  { id: 'K07', label: 'Specimen K07 — Signatory Name Mismatch (Human Review)', outcome: 'requires_review' },
+  { id: 'K08', label: 'Specimen K08 — Green Leaf Legal Associates (Clean / Auto-Approved)', outcome: 'auto_approved' },
+  { id: 'K09', label: 'Specimen K09 — Kaveri Insurance Advisors (Clean / Auto-Approved)', outcome: 'auto_approved' },
+  { id: 'K10', label: 'Specimen K10 — Kaveri Stays LLP (Clean / Auto-Approved)', outcome: 'auto_approved' },
+  { id: 'K11', label: 'Specimen K11 — Trinity Bake House, Stale Bill > 90d (Rejected)', outcome: 'rejected' },
+  { id: 'K12', label: 'Specimen K12 — Star Electronics (Clean / Auto-Approved)', outcome: 'auto_approved' },
 ];
 
 export default function KycUploader({ consentId, quoteId, leadId, onUploadSuccess }) {

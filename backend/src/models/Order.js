@@ -93,6 +93,20 @@ const orderSchema = new mongoose.Schema(
       paidAt: { type: Date },
       simulated: { type: Boolean, default: true },
     },
+    telemetry: {
+      opticalSignalDbm: { type: Number, default: -19.4 },
+      lightLossDb: { type: Number, default: 0.8 },
+      snrDb: { type: Number, default: 34.5 },
+      lastTechnicianNote: { type: String },
+      lastUpdated: { type: Date },
+    },
+    history: [
+      {
+        status: { type: String },
+        timestamp: { type: Date, default: Date.now },
+        note: { type: String },
+      },
+    ],
   },
   {
     timestamps: true,

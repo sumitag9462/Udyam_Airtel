@@ -23,7 +23,7 @@ export default function TrackerPage() {
     setLoading(true);
     setError(null);
     try {
-      if (orderParam) {
+      if (orderParam && orderParam !== 'ORD-NEW') {
         const data = await getOrder(orderParam);
         setOrder(data);
       } else if (quoteId) {

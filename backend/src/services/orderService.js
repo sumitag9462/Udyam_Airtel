@@ -52,7 +52,15 @@ async function calculateEstimatedActivation(quote) {
  * Enforces idempotency via idempotencyKey.
  * Re-validates quote prices against catalogue to prevent price drift (Rule 11).
  */
-export async function createOrder({ quoteId, userId, idempotencyKey, leadId = null }) {
+export async function createOrder({
+  quoteId,
+  userId,
+  idempotencyKey,
+  leadId = null,
+  paymentMethod = null,
+  signatoryName = null,
+  signedAt = null,
+}) {
   if (!idempotencyKey) {
     throw new OrderError('Idempotency-Key header is required for order creation', 'IDEMPOTENCY_REQUIRED', 400);
   }
@@ -132,6 +140,7 @@ export async function createOrder({ quoteId, userId, idempotencyKey, leadId = nu
   }
 
   const { estimatedDate, reason } = await calculateEstimatedActivation(quote);
+  const dueTodayAmount = Math.round(((quote.monthlyTotal || 0) + (quote.setupTotal || 0)) * 1.18);
 
   const order = new Order({
     orderId: generateOrderId(),
@@ -156,11 +165,26 @@ export async function createOrder({ quoteId, userId, idempotencyKey, leadId = nu
       reason: 'Airtel Optical Line Terminal (OLT) port allocation scheduled.',
     },
     paymentRecord: {
-      amountInr: quote.setupTotal,
-      status: 'pending',
+      amountInr: dueTodayAmount,
+      status: paymentMethod ? 'success' : 'pending',
+      paidAt: paymentMethod ? new Date() : null,
       simulated: true,
     },
+    eSignRecord: {
+      quoteHash: quote.priceHash,
+      signedAt: signedAt ? new Date(signedAt) : new Date(),
+      otpVerified: true,
+    },
   });
+
+  if (signatoryName && paymentMethod) {
+    order.timeline.push({
+      status: 'QUOTE_ACCEPTED',
+      at: new Date(),
+      simulated: true,
+      note: `Commercial agreement executed by authorized signatory: ${signatoryName}. First billing & installation fee (₹${dueTodayAmount.toLocaleString('en-IN')}) authorized via ${paymentMethod.toUpperCase()}.`,
+    });
+  }
 
   if (initialStatus !== 'QUOTE_ACCEPTED') {
     order.timeline.push({
