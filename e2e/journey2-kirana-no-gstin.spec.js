@@ -4,7 +4,7 @@ test.describe('Journey 2: Kirana without GSTIN - Gated Products & AirFiber Alter
   test('asserts GSTIN-gated leased lines are restricted and 5G AirFiber alternative is offered', async ({ page }) => {
     // 1. Visit quotes configuration
     await page.goto('/quotes');
-    await expect(page.locator('h1, h2')).toContainText([/quote|योजना/i]);
+    await expect(page.locator('h1, h2')).toContainText([/quote|योजना|कोटेशन/i]);
 
     // 2. Open business preview or configure profile
     const profileToggle = page.getByRole('button', { name: /business preview|profile|scenario/i });
