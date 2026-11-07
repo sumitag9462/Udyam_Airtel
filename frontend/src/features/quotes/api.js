@@ -45,7 +45,7 @@ export async function previewQuoteScenario(quoteId, scenario, payload = {}) {
   if (quoteId && quoteId !== 'DRAFT-PREVIEW') {
     return apiRequest(`/quotes/${quoteId}/preview`, {
       method: 'POST',
-      body: JSON.stringify({ scenario }),
+      body: JSON.stringify({ scenario, ...payload }),
     });
   }
   return apiRequest('/rules/preview', {

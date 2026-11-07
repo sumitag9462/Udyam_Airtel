@@ -15,6 +15,19 @@ export const useAuthStore = create((set) => ({
       const data = await apiRequest('/auth/me');
       set({ user: data.user, isAuthenticated: true, isLoading: false });
     } catch {
+      // If /auth/me fails, attempt refresh in case access token expired but refresh cookie is valid
+      try {
+        const data = await apiRequest('/auth/refresh', { method: 'POST' });
+        if (data?.user) {
+          if (data.csrfToken) {
+            localStorage.setItem('csrf_token', data.csrfToken);
+          }
+          set({ user: data.user, isAuthenticated: true, isLoading: false });
+          return;
+        }
+      } catch {
+        // Both access and refresh tokens absent/expired
+      }
       set({ user: null, isAuthenticated: false, isLoading: false });
     }
   },

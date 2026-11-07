@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 export default function TierCards({ tiers, selectedTier, onSelectTier, loading, onExploreDefault, budgetMonthly }) {
+  const { t } = useTranslation();
   if (!tiers || tiers.length === 0) {
     return (
       <div className="p-8 text-center bg-gray-50 border border-divider rounded-lg max-w-xl mx-auto my-6 space-y-4">
@@ -167,7 +169,7 @@ export default function TierCards({ tiers, selectedTier, onSelectTier, loading, 
                   : 'btn-secondary hover:bg-gray-100'
               }`}
             >
-              {isSelected ? '✓ Selected' : 'Select Plan'}
+              {isSelected ? t('quotes.selected', '✓ Selected') : t('quotes.selectPlan', 'Select Plan')}
             </button>
           </div>
         );

@@ -51,7 +51,11 @@ export default function KycUploader({ consentId, quoteId, leadId, onUploadSucces
       const formData = new FormData();
       if (consentId) formData.append('consentId', consentId);
       if (quoteId) formData.append('quoteId', quoteId);
-      if (leadId) formData.append('leadId', leadId);
+      const quoteMongoId = typeof window !== 'undefined' && window.sessionStorage ? sessionStorage.getItem('udyam_last_quote_mongo_id') : null;
+      if (quoteMongoId) formData.append('quoteMongoId', quoteMongoId);
+      const fallbackLeadId = typeof window !== 'undefined' && window.sessionStorage ? sessionStorage.getItem('udyam_last_lead_id') : null;
+      const effectiveLead = leadId || fallbackLeadId;
+      if (effectiveLead) formData.append('leadId', effectiveLead);
 
       if (useSpecimen) {
         formData.append('applicantId', selectedDemo);

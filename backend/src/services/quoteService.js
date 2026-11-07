@@ -174,11 +174,25 @@ export async function updateQuoteItems(quoteId, lineItems, user) {
 /**
  * Run Business Preview scenario on quote.
  */
-export async function previewQuoteScenario(quoteId, scenario, user) {
+export async function previewQuoteScenario(quoteId, scenario, user, options = {}) {
   const quote = await getQuoteById(quoteId, user);
   const products = await Product.find({ isActive: true }).lean();
 
-  return previewScenario(quote, scenario, quote.profileSnapshot, products);
+  let effectiveQuote = quote;
+  if (options.lineItems && Array.isArray(options.lineItems) && options.lineItems.length > 0) {
+    const computed = computeQuote(options.lineItems, products, quote.pricingMode || config.PRICING_MODE || 'min');
+    effectiveQuote = {
+      ...(quote.toObject ? quote.toObject() : quote),
+      ...computed,
+      lineItems: computed.lineItems,
+      monthlyTotal: computed.monthlyTotal,
+      setupTotal: computed.setupTotal,
+      pricingMode: quote.pricingMode || 'min',
+    };
+  }
+
+  const effectiveProfile = options.profile || quote.profileSnapshot;
+  return previewScenario(effectiveQuote, scenario, effectiveProfile, products);
 }
 
 /**

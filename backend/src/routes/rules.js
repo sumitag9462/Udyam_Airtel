@@ -134,7 +134,7 @@ router.post('/preview', async (req, res, next) => {
     const profile = { ...rawProfile, segment };
     const products = await Product.find({ isActive: true }).lean();
     const quote = computeQuote(lineItems || [], products, config.PRICING_MODE);
-    const preview = previewScenario(quote, scenario, products, profile);
+    const preview = previewScenario(quote, scenario, profile, products);
     res.status(200).json({ ok: true, data: { preview } });
   } catch (err) {
     next(err);

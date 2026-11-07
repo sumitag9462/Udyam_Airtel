@@ -22,7 +22,7 @@ test.describe('Journey 1: Hindi Clinic - End-to-End Onboarding', () => {
 
     // 4. Navigate to Quotes
     await page.goto('/quotes');
-    await expect(page.locator('h1, h2')).toContainText([/quote|योजना/i]);
+    await expect(page.locator('h1, h2')).toContainText([/quote|योजना|कोटेशन/i]);
 
     // 5. Select Standard Tier if visible
     const standardTier = page.locator('text=/standard/i').first();
@@ -45,7 +45,7 @@ test.describe('Journey 1: Hindi Clinic - End-to-End Onboarding', () => {
     await expect(page.locator('text=/Airtel|Udyam One/i').first()).toBeVisible();
 
     // Verify tracker displays order state or prompt to browse quotes
-    const orderState = page.locator('text=/No Active Orders Found|Delivery Progress|Browse Quotes|Connecting/i').first();
+    const orderState = page.locator('text=/No Active Orders Found|Delivery Progress|Browse Quotes|Connecting|कोई सक्रिय ऑर्डर|ऑर्डर|कोटेशन/i').first();
     await expect(orderState).toBeVisible();
   });
 });

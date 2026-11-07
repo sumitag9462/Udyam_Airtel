@@ -141,14 +141,14 @@ export async function withdrawConsent(req, res, next) {
 export async function uploadKycDocuments(req, res, next) {
   try {
     const userId = req.user?._id;
-    const { leadId, quoteId, consentId, applicantId } = req.body;
+    const { leadId, quoteId, quoteMongoId, consentId, applicantId } = req.body;
 
     const files = req.files || {};
 
     const result = await processApplicantKyc({
       userId,
       leadId,
-      quoteId,
+      quoteId: quoteMongoId || quoteId,
       consentId,
       applicantId,
       files,

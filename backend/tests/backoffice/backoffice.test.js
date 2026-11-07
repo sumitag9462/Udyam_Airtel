@@ -36,9 +36,6 @@ describe('Phase 7: Back-office, Propensity Scoring & Analytics Suite', () => {
 
   afterAll(async () => {
     await User.deleteMany({ _id: { $in: [ownerUser._id, advisorUser._id] } });
-    if (mongoose.connection.readyState === 1) {
-      await mongoose.disconnect();
-    }
   });
 
   describe('Role-Gated Access Control (Non-negotiable Rule 10)', () => {

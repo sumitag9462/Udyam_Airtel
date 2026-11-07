@@ -100,7 +100,6 @@ describe('Me & DPDP Compliance API Suite', () => {
       await DeletionRequest.deleteMany({ userId: testUser._id });
       await Grievance.deleteMany({ userId: testUser._id });
     }
-    await mongoose.disconnect();
   });
 
   describe('GET /api/v1/me/overview', () => {

@@ -37,29 +37,50 @@ export default function AdvisorChat() {
 
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+  const sendingRef = useRef(false);
 
-  // Initial welcome message if no previous messages
+  const getWelcomeText = (lang) => {
+    return (lang || '').startsWith('hi')
+      ? 'Namaste! Main Airtel Udyam One digital advisor hoon. Aapka kis cheez ka business hai aur kis city me sthit hai?'
+      : 'Welcome to Airtel Udyam One. I am your business connectivity advisor. What type of business do you operate, and in which city are you located?';
+  };
+
+  // Initial welcome message appears strictly once per new conversation
   useEffect(() => {
     if (messages.length === 0) {
-      const isHi = i18n.language === 'hi';
+      const isHi = (i18n.language || '').startsWith('hi');
       const welcome = [
         {
           role: 'assistant',
-          text: isHi
-            ? 'Namaste! Main Airtel Udyam One digital advisor hoon. Aapka kis cheez ka business hai aur kis city me sthit hai?'
-            : 'Welcome to Airtel Udyam One. I am your business connectivity advisor. What type of business do you operate, and in which city are you located?',
+          text: getWelcomeText(isHi ? 'hi' : 'en'),
+          isWelcome: true,
           createdAt: new Date(),
         },
       ];
       setMessages(welcome);
       sessionStorage.setItem('udyam_advisor_messages', JSON.stringify(welcome));
     }
-  }, [i18n.language, messages.length]);
+  }, []);
+
+  // Update initial welcome message language if user changes language before sending first message
+  useEffect(() => {
+    if (messages.length === 1 && messages[0].role === 'assistant' && messages[0].isWelcome) {
+      const isHi = (i18n.language || '').startsWith('hi');
+      const targetText = getWelcomeText(isHi ? 'hi' : 'en');
+      if (messages[0].text !== targetText) {
+        const updated = [{ ...messages[0], text: targetText }];
+        setMessages(updated);
+        sessionStorage.setItem('udyam_advisor_messages', JSON.stringify(updated));
+      }
+    }
+  }, [i18n.language]);
 
   // Restore conversation from server if conversationId exists but messages only has welcome
   useEffect(() => {
     if (conversationId && messages.length <= 1) {
-      apiRequest(`/advisor/conversations/${conversationId}`)
+      const sSecret = sessionStorage.getItem('udyam_advisor_sessionSecret');
+      const headers = sSecret ? { 'X-Session-Secret': sSecret } : {};
+      apiRequest(`/advisor/conversations/${conversationId}`, { headers })
         .then((data) => {
           if (data?.conversation?.messages?.length > 0) {
             const formatted = data.conversation.messages.map((m) => ({
@@ -109,13 +130,12 @@ export default function AdvisorChat() {
     setProfile({});
     setTiers(null);
     setHandoff(false);
-    const isHi = i18n.language === 'hi';
+    const isHi = (i18n.language || '').startsWith('hi');
     const welcome = [
       {
         role: 'assistant',
-        text: isHi
-          ? 'Namaste! Main Airtel Udyam One digital advisor hoon. Aapka kis cheez ka business hai aur kis city me sthit hai?'
-          : 'Welcome to Airtel Udyam One. I am your business connectivity advisor. What type of business do you operate, and in which city are you located?',
+        text: getWelcomeText(isHi ? 'hi' : 'en'),
+        isWelcome: true,
         createdAt: new Date(),
       },
     ];
@@ -125,8 +145,9 @@ export default function AdvisorChat() {
 
   const handleSendMessage = async (customText = null) => {
     const textToSend = customText || inputText;
-    if (!textToSend.trim() || loading) return;
+    if (!textToSend.trim() || loading || sendingRef.current) return;
 
+    sendingRef.current = true;
     const userMsg = {
       role: 'user',
       text: textToSend.trim(),
@@ -140,7 +161,7 @@ export default function AdvisorChat() {
     try {
       const payload = {
         message: textToSend.trim(),
-        language: i18n.language || 'en',
+        language: (i18n.language || 'en').startsWith('hi') ? 'hi' : 'en',
       };
       if (conversationId) payload.conversationId = conversationId;
       const sSecret = sessionStorage.getItem('udyam_advisor_sessionSecret');
@@ -168,10 +189,11 @@ export default function AdvisorChat() {
       }
       if (res.handoffRequested) setHandoff(true);
 
+      const isCurrentHi = (i18n.language || '').startsWith('hi');
       const safeReply =
         res?.reply && typeof res.reply === 'string' && res.reply.trim().length > 0
           ? res.reply
-          : i18n.language === 'hi'
+          : isCurrentHi
           ? 'Kripya apne business ke baare mein aur jaankari dein taaki hum sahi plan suggest kar sakein.'
           : 'Could you please share a few more details about your business so we can calculate the best plan for you?';
 
@@ -189,10 +211,12 @@ export default function AdvisorChat() {
           role: 'assistant',
           text: `I encountered an issue connecting to the Airtel rules service (${err.message || 'Network error'}). Please try again or select plans directly.`,
           error: true,
+          failedText: textToSend.trim(),
           createdAt: new Date(),
         },
       ]);
     } finally {
+      sendingRef.current = false;
       setLoading(false);
       setTimeout(() => inputRef.current?.focus(), 50);
     }
@@ -240,6 +264,17 @@ export default function AdvisorChat() {
           </div>
 
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                const nextLang = (i18n.language || '').startsWith('hi') ? 'en' : 'hi';
+                i18n.changeLanguage(nextLang);
+              }}
+              className="px-2 py-0.5 text-[11px] font-semibold rounded-full border border-slate-300 text-slate-700 hover:bg-slate-100 transition-colors"
+              title="Toggle Hindi/English"
+            >
+              {(i18n.language || '').startsWith('hi') ? 'English' : 'हिंदी'}
+            </button>
             {messages.length > 1 && (
               <button
                 type="button"
@@ -261,7 +296,11 @@ export default function AdvisorChat() {
             )}
             <button
               type="button"
-              onClick={() => navigate('/quotes', { state: { profile, tier: tiers?.[0]?.tierLabel || 'standard' } })}
+              onClick={() => {
+                sessionStorage.setItem('udyam_advisor_profile', JSON.stringify(profile));
+                if (tiers) sessionStorage.setItem('udyam_advisor_tiers', JSON.stringify(tiers));
+                navigate('/quotes', { state: { profile, tier: tiers?.[0]?.tierLabel || 'standard' } });
+              }}
               className="text-xs text-airtel-red font-semibold hover:underline whitespace-nowrap ml-1"
             >
               {profile.businessType && profile.city ? 'View Plan Quotes →' : 'Set up my quote →'}
@@ -303,6 +342,15 @@ export default function AdvisorChat() {
                   }`}
                 >
                   <p className="whitespace-pre-wrap leading-relaxed">{msg.text}</p>
+                  {msg.error && msg.failedText && (
+                    <button
+                      type="button"
+                      onClick={() => handleSendMessage(msg.failedText)}
+                      className="mt-2 text-xs font-semibold text-airtel-red underline hover:text-dark-red block"
+                    >
+                      ↻ Retry sending
+                    </button>
+                  )}
 
                   {/* Inline Recommendation Cards when tiers returned */}
                   {msg.tiers && msg.tiers.length > 0 && (
@@ -476,7 +524,7 @@ export default function AdvisorChat() {
                   {tiers[1]?.tierLabel || tiers[0]?.tierLabel}
                 </span>
                 <span className="text-base font-extrabold text-airtel-red">
-                  ₹{(tiers[1]?.monthlyTotal || tiers[0]?.monthlyTotal).toLocaleString('en-IN')}/mo
+                  ₹{((tiers[1]?.monthlyTotal || tiers[0]?.monthlyTotal) || 0).toLocaleString('en-IN')}/mo
                 </span>
               </div>
               <p className="text-[11px] text-secondary">

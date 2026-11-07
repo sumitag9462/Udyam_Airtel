@@ -2,7 +2,8 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { Consent, KycCase, Document, Lead, Order } from '../models/index.js';
+import mongoose from 'mongoose';
+import { Consent, KycCase, Document, Lead, Order, Quote } from '../models/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -18,6 +19,7 @@ import LocalEncryptedStorageProvider from './storage/StorageProvider.js';
 import { getOcrProvider } from './ocr/index.js';
 import { config } from '../config/env.js';
 import logger from '../config/logger.js';
+import AppError from '../utils/AppError.js';
 
 export class ConsentRequiredError extends Error {
   constructor(message = 'Valid un-withdrawn consent required before KYC upload') {
@@ -50,18 +52,90 @@ export async function processApplicantKyc({
 }) {
   logger.info({ userId, leadId, applicantId }, 'Starting KYC processing pipeline');
 
-  // Step 1: Strict Consent Enforcement (Non-negotiable Rule 7)
-  const consentQuery = {
-    $and: [
-      { $or: [{ _id: consentId }, { userId }, { leadId }].filter(Boolean) },
-      { withdrawnAt: { $exists: false } },
-      { revokedAt: { $exists: false } },
-    ],
-  };
+  // Resolve quote record if quoteId passed (either ObjectId or human-readable "Q-..." string)
+  let effectiveQuoteId = null;
+  let quoteRecord = null;
+  if (quoteId) {
+    if (mongoose.isValidObjectId(quoteId)) {
+      quoteRecord = await Quote.findById(quoteId);
+    }
+    if (!quoteRecord) {
+      quoteRecord = await Quote.findOne({ quoteId });
+    }
+    if (quoteRecord) {
+      if (userId && quoteRecord.userId && quoteRecord.userId.toString() !== userId.toString()) {
+        throw new AppError('Access forbidden: quote belongs to another user', 403, 'FORBIDDEN');
+      }
+      effectiveQuoteId = quoteRecord._id;
+      if (!leadId && quoteRecord.leadId) {
+        leadId = quoteRecord.leadId;
+      }
+    }
+  }
 
-  const activeConsent = await Consent.findOne(consentQuery);
+  // Resolve lead record if leadId passed or find user lead
+  let effectiveLeadId = null;
+  if (leadId) {
+    let leadDoc = null;
+    if (mongoose.isValidObjectId(leadId)) {
+      leadDoc = await Lead.findById(leadId);
+    }
+    if (!leadDoc) {
+      leadDoc = await Lead.findOne({ leadId });
+    }
+    if (leadDoc) {
+      if (userId && leadDoc.ownerUserId && leadDoc.ownerUserId.toString() !== userId.toString()) {
+        throw new AppError('Access forbidden: lead belongs to another user', 403, 'FORBIDDEN');
+      }
+      effectiveLeadId = leadDoc._id;
+    }
+  }
+
+  if (!effectiveLeadId && userId) {
+    let leadDoc = await Lead.findOne({ ownerUserId: userId });
+    if (!leadDoc) {
+      leadDoc = await Lead.create({
+        leadId: `LD-KYC-${Date.now().toString(36).toUpperCase()}`,
+        origin: 'live',
+        ownerUserId: userId,
+        businessName: 'Business Applicant',
+        businessType: 'Retail',
+        segment: 'micro',
+        city: 'Delhi',
+        cityTier: 1,
+        state: 'Delhi',
+        preferredLanguage: 'English',
+        employeeCount: 5,
+        numSites: 1,
+        hasGstin: true,
+        hasUdyam: false,
+        leadSource: 'Website form',
+        stageReached: 'quote_accepted',
+        stageOrdinal: 3,
+      });
+    }
+    effectiveLeadId = leadDoc._id;
+  }
+
+  // Step 1: Strict Consent Enforcement (Non-negotiable Rule 7)
+  const consentConditions = [
+    { withdrawnAt: { $exists: false } },
+    { revokedAt: { $exists: false } },
+  ];
+
+  if (userId) {
+    consentConditions.push({ userId });
+  }
+
+  if (mongoose.isValidObjectId(consentId)) {
+    consentConditions.push({ _id: consentId });
+  } else if (effectiveLeadId && !userId) {
+    consentConditions.push({ leadId: effectiveLeadId });
+  }
+
+  const activeConsent = await Consent.findOne({ $and: consentConditions });
   if (!activeConsent) {
-    logger.warn({ userId, leadId, consentId }, 'Rejected KYC upload: active consent not found');
+    logger.warn({ userId, leadId: effectiveLeadId, consentId }, 'Rejected KYC upload: active consent not found');
     throw new ConsentRequiredError();
   }
 
@@ -127,8 +201,8 @@ export async function processApplicantKyc({
 
   // Step 3: Find or initialize KycCase
   let kycCase = null;
-  if (leadId) {
-    kycCase = await KycCase.findOne({ leadId });
+  if (effectiveLeadId) {
+    kycCase = await KycCase.findOne({ leadId: effectiveLeadId });
   }
   if (!kycCase && userId) {
     kycCase = await KycCase.findOne({ userId });
@@ -137,14 +211,15 @@ export async function processApplicantKyc({
   if (!kycCase) {
     kycCase = new KycCase({
       userId,
-      leadId,
-      quoteId,
+      leadId: effectiveLeadId,
+      quoteId: effectiveQuoteId,
       consentId: effectiveConsentId,
       status: 'extracting',
     });
   } else {
     kycCase.status = 'extracting';
-    if (quoteId) kycCase.quoteId = quoteId;
+    if (effectiveQuoteId) kycCase.quoteId = effectiveQuoteId;
+    if (effectiveLeadId) kycCase.leadId = effectiveLeadId;
     kycCase.consentId = effectiveConsentId;
   }
   await kycCase.save();
@@ -267,20 +342,22 @@ export async function processApplicantKyc({
   await kycCase.save();
 
   // Step 7: Funnel Progression (Lead & Order Sync)
-  if (leadId) {
-    const lead = await Lead.findById(leadId);
+  const targetLeadId = effectiveLeadId || leadId;
+  if (targetLeadId) {
+    const lead = await Lead.findById(targetLeadId);
     if (lead) {
       if (kycStatus === 'verified' && lead.stageOrdinal < 4) {
         lead.stageReached = 'kyc_complete';
         lead.stageOrdinal = 4;
         await lead.save();
-        logger.info({ leadId, stage: 'kyc_complete' }, 'Lead advanced to KYC Complete');
+        logger.info({ leadId: targetLeadId, stage: 'kyc_complete' }, 'Lead advanced to KYC Complete');
       }
     }
   }
 
-  if (quoteId) {
-    const order = await Order.findOne({ quoteId });
+  const targetQuoteId = effectiveQuoteId || (mongoose.isValidObjectId(quoteId) ? quoteId : null);
+  if (targetQuoteId) {
+    const order = await Order.findOne({ quoteId: targetQuoteId });
     if (order) {
       if (kycStatus === 'verified') {
         order.status = 'KYC_VERIFIED';

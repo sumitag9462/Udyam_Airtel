@@ -121,20 +121,39 @@ export function previewScenario(quote, scenario, profile = {}, products = []) {
       const targetBudget = Math.floor(currentMonthly * 0.8);
       const itemsToKeep = [];
       let total = 0;
+      const givenUpItems = [];
 
-      // Keep primary links first
+      // Primary links ordered by capacity
       const primaryLinks = ['P01', 'P02', 'P03', 'P04', 'P05', 'P06'];
-      for (const item of quote.lineItems) {
-        if (primaryLinks.includes(item.productId)) {
-          itemsToKeep.push({ productId: item.productId, qty: item.qty });
-          total += item.lineMonthly;
-          break;
+      const primaryItem = quote.lineItems.find((i) => primaryLinks.includes(i.productId));
+
+      // If primary link alone exceeds target budget, check if downgrade is available
+      if (primaryItem && primaryItem.lineMonthly > targetBudget && primaryItem.qty === 1) {
+        let replacementId = null;
+        if (primaryItem.productId === 'P03') replacementId = 'P02';
+        else if (primaryItem.productId === 'P02') replacementId = 'P01';
+
+        const replacementProduct = replacementId ? products.find((p) => p.productId === replacementId) : null;
+        if (replacementProduct) {
+          const replacementMonthly = replacementProduct.minMonthly || replacementProduct.monthlyPrice || 999;
+          itemsToKeep.push({ productId: replacementId, qty: 1 });
+          total += replacementMonthly;
+          givenUpItems.push({
+            productId: primaryItem.productId,
+            name: `${primaryItem.name} → Downgraded to ${replacementProduct.name}`,
+            monthlySaving: primaryItem.lineMonthly - replacementMonthly,
+          });
+        } else {
+          itemsToKeep.push({ productId: primaryItem.productId, qty: primaryItem.qty });
+          total += primaryItem.lineMonthly;
         }
+      } else if (primaryItem) {
+        itemsToKeep.push({ productId: primaryItem.productId, qty: primaryItem.qty });
+        total += primaryItem.lineMonthly;
       }
 
-      const givenUpItems = [];
       for (const item of quote.lineItems) {
-        if (itemsToKeep.some((k) => k.productId === item.productId)) continue;
+        if (primaryItem && item.productId === primaryItem.productId) continue;
         if (total + item.lineMonthly <= targetBudget) {
           itemsToKeep.push({ productId: item.productId, qty: item.qty });
           total += item.lineMonthly;

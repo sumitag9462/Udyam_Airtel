@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../store/authStore.js';
 import Navbar from '../components/Navbar.jsx';
 import Footer from '../components/Footer.jsx';
@@ -17,6 +18,7 @@ import {
 } from '../features/quotes/api.js';
 
 export default function QuotePage() {
+  const { t } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -81,6 +83,28 @@ export default function QuotePage() {
             setActiveTier(qRes.quote.tierLabel);
           }
         } else {
+          // Check if there is already an accepted locked quote in session
+          const acceptedQuoteId = typeof window !== 'undefined' && window.sessionStorage ? sessionStorage.getItem('udyam_accepted_quote_id') : null;
+          if (acceptedQuoteId && isAuthenticated) {
+            try {
+              const qRes = await getQuote(acceptedQuoteId);
+              if (qRes?.quote && qRes.quote.status === 'accepted') {
+                if (isMounted) {
+                  setQuote(qRes.quote);
+                  setActiveTier(qRes.quote.tierLabel);
+                  // also fetch bundles in background for tier cards display
+                  fetchBundles(currentProfile).then((res) => {
+                    if (isMounted) setTiers(res.tiers || []);
+                  }).catch(() => {});
+                  setLoading(false);
+                  return;
+                }
+              }
+            } catch {
+              // fallback to regular draft creation
+            }
+          }
+
           // 3. Otherwise compute 3 tiers for profile
           const preferredTier = location.state?.tier || sessionStorage.getItem('udyam_selected_tier') || 'standard';
           if (isMounted) setActiveTier(preferredTier);
@@ -153,6 +177,14 @@ export default function QuotePage() {
   // Select a different tier
   const handleSelectTier = async (tierLabel) => {
     try {
+      if (isImmutable) {
+        const confirmChange = window.confirm(
+          'Your current quote pricing is locked. Modifying plans will create a new draft quote revision. Do you want to proceed?'
+        );
+        if (!confirmChange) return;
+        sessionStorage.removeItem('udyam_accepted_quote_id');
+      }
+
       setUpdating(true);
       setError(null);
       setActiveTier(tierLabel);
@@ -182,6 +214,23 @@ export default function QuotePage() {
       }
     } catch (err) {
       setError(err.message || 'Failed to apply tier.');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleStartNewRevision = async () => {
+    sessionStorage.removeItem('udyam_accepted_quote_id');
+    try {
+      setUpdating(true);
+      setError(null);
+      const draftRes = await createQuote({
+        tierLabel: activeTier || 'standard',
+        profile: quote?.profileSnapshot || currentProfile,
+      });
+      setQuote(draftRes.quote);
+    } catch (err) {
+      setError(err.message || 'Failed to create new revision.');
     } finally {
       setUpdating(false);
     }
@@ -267,28 +316,49 @@ export default function QuotePage() {
         {/* Header Breadcrumbs / Title */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-primary">Transparent Business Quote</h1>
+            <h1 className="text-2xl font-bold text-primary">{t('quotes.pageTitle', 'Transparent Business Quote')}</h1>
             <p className="text-xs text-secondary mt-1">
-              Deterministic, rule-verified pricing. One single predictable monthly cost with zero hidden surcharges.
+              {t('quotes.subtitle', 'Deterministic, rule-verified pricing. One single predictable monthly cost with zero hidden surcharges.')}
             </p>
           </div>
 
           {quote && (
             <div className="flex items-center gap-3 self-start sm:self-auto">
               <div className="text-right">
-                <span className="text-xs text-secondary block">Monthly Total:</span>
+                <span className="text-xs text-secondary block">{t('quotes.monthlyTotal', 'Monthly Total')}:</span>
                 <span className="text-xl font-extrabold text-primary">
                   ₹{quote.monthlyTotal.toLocaleString('en-IN')}/mo
                 </span>
               </div>
-              {!isImmutable && (
+              {!isImmutable ? (
                 <button
                   type="button"
                   onClick={handleAcceptClick}
                   className="btn-primary text-xs py-2.5 px-4 font-semibold"
                 >
-                  {isAuthenticated ? 'Accept Quote →' : 'Sign In to Accept Quote →'}
+                  {isAuthenticated ? t('quotes.acceptAndLock', 'Accept Quote & Lock Price →') : t('quotes.signInToAccept', 'Sign In to Accept Quote →')}
                 </button>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <span className="bg-emerald-100 text-emerald-800 border border-emerald-300 px-3 py-1.5 rounded-md text-xs font-bold flex items-center gap-1.5">
+                    <span>🔒</span>
+                    <span>{t('quotes.pricingLocked', 'Pricing Locked')}</span>
+                  </span>
+                  <Link
+                    to={`/kyc?quoteId=${quote.quoteId}&leadId=${quote.leadId || ''}`}
+                    className="btn-primary text-xs py-2 px-3 font-semibold"
+                  >
+                    {t('quotes.proceedToKyc', 'Proceed to KYC →')}
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={handleStartNewRevision}
+                    className="btn-secondary text-xs py-2 px-2.5 font-semibold text-secondary hover:text-primary"
+                    title="Start a new quote revision"
+                  >
+                    {t('quotes.newRevision', 'New Revision ⟳')}
+                  </button>
+                </div>
               )}
             </div>
           )}
@@ -362,6 +432,9 @@ export default function QuotePage() {
           onClose={() => setIsAcceptModalOpen(false)}
           onAccepted={(acceptedQuote) => {
             setQuote(acceptedQuote);
+            if (typeof window !== 'undefined' && window.sessionStorage) {
+              sessionStorage.setItem('udyam_accepted_quote_id', acceptedQuote.quoteId);
+            }
           }}
         />
       )}

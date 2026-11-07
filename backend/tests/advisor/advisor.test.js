@@ -32,9 +32,6 @@ describe('Phase 4: Advisor Chat & Response Guard Suite', () => {
     await Lead.deleteMany({ ownerUserId: testUser._id });
     await Conversation.deleteMany({ userId: testUser._id });
     await Quote.deleteMany({ userId: testUser._id });
-    if (mongoose.connection.readyState === 1) {
-      await mongoose.disconnect();
-    }
   });
 
   describe('Response Guard Enforcement', () => {

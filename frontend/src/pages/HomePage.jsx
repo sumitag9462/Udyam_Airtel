@@ -27,7 +27,7 @@ export default function HomePage() {
     try {
       setLoading(true);
       const res = await apiRequest('/me/overview');
-      setData(res.data);
+      setData(res.data || res);
     } catch (err) {
       setError(err.message || 'Failed to load account overview');
     } finally {

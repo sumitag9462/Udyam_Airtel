@@ -121,6 +121,9 @@ export default function CheckoutPage() {
       setPaymentSuccess(true);
 
       const realOrderId = orderRes?.orderId || orderRes?._id || orderRes?.data?.orderId || orderRes?.data?._id;
+      if (typeof window !== 'undefined' && window.sessionStorage && realOrderId) {
+        sessionStorage.setItem('udyam_last_order_id', realOrderId);
+      }
       if (realOrderId) {
         setTimeout(() => {
           navigate(`/orders/${realOrderId}`);

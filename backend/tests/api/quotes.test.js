@@ -26,9 +26,6 @@ describe('Phase 3: Quotes, Catalogue & Rules API Suite', () => {
   afterAll(async () => {
     await User.deleteOne({ _id: ownerUser._id });
     await Quote.deleteMany({ userId: ownerUser._id });
-    if (mongoose.connection.readyState === 1) {
-      await mongoose.disconnect();
-    }
   });
 
   describe('Catalogue Endpoint (GET /api/v1/catalogue)', () => {

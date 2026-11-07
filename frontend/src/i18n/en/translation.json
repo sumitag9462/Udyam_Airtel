@@ -1,16 +1,100 @@
 {
+  "nav": {
+    "home": "My Udyam",
+    "advisor": "AI Advisor",
+    "quotes": "Quote",
+    "kyc": "Smart KYC",
+    "tracker": "Track Order",
+    "help": "Help & FAQ",
+    "backoffice": "Back-Office",
+    "privacy": "DPDP Privacy",
+    "logout": "Log Out",
+    "login": "Sign In",
+    "langToggle": "हिंदी"
+  },
   "landing": {
     "title": "Udyam One",
-    "subtitle": "Smart business connectivity for your business",
-    "stepsLabel": "How it works",
+    "subtitle": "Smart business connectivity for your enterprise",
+    "stepsLabel": "How It Works",
     "step1Title": "Tell us about your business",
     "step1Desc": "Chat with our advisor in Hindi or English",
     "step2Title": "Get your plan",
     "step2Desc": "One transparent monthly quote with options you control",
     "step3Title": "Quick verification",
     "step3Desc": "Upload documents and track your order — no phone calls needed",
-    "cta": "Start",
-    "privacyLink": "Privacy notice"
+    "step4Title": "Live Order Tracker",
+    "step4Desc": "Real-time provisioning status directly to your doorstep",
+    "cta": "Start Digital Setup",
+    "privacyLink": "Privacy notice",
+    "trustBadge": "Airtel SYNC 2026 · Project Udyam Digital"
+  },
+  "advisor": {
+    "title": "Airtel AI Connectivity Advisor",
+    "statusOnline": "AI Advisor Active",
+    "inputPlaceholder": "Tell us about your business or requirements in English or Hindi...",
+    "send": "Send",
+    "reset": "Reset Conversation",
+    "talkToPerson": "Talk to a person",
+    "liveProfile": "Live Business Profile",
+    "suggestedPlans": "Suggested Airtel Business Plans",
+    "viewQuotes": "View Plan Quotes →",
+    "setupQuote": "Set up my quote →",
+    "proceedToCustom": "Proceed to Custom Quote →",
+    "requestCallback": "Request Human Advisor Callback",
+    "ruleActive": "Rules Active"
+  },
+  "quotes": {
+    "pageTitle": "Transparent Business Quote",
+    "subtitle": "Deterministic, rule-verified pricing. One single predictable monthly cost with zero hidden surcharges.",
+    "monthlyTotal": "Monthly Total",
+    "acceptQuote": "Accept Quote →",
+    "acceptAndLock": "Accept Quote & Lock Price →",
+    "signInToAccept": "Sign In to Accept Quote →",
+    "pricingLocked": "Pricing Locked",
+    "proceedToKyc": "Proceed to KYC →",
+    "newRevision": "New Revision ⟳",
+    "chooseTier": "1. Choose Recommendation Tier",
+    "customizeAddOns": "2. Customize Add-ons & Quantities",
+    "continuityPreview": "3. Business Scenario Preview",
+    "selectPlan": "Select Plan",
+    "selected": "✓ Selected",
+    "lockedPlan": "✓ Locked Plan",
+    "withinBudget": "Within budget",
+    "overBudget": "over budget"
+  },
+  "kyc": {
+    "pageTitle": "Smart Document Verification",
+    "subtitle": "Automated extraction and multi-registry verification",
+    "step1Locked": "1. Quote Locked",
+    "step2Kyc": "2. Smart KYC",
+    "step3Checkout": "3. Checkout",
+    "step4Install": "4. Installation",
+    "consentTitle": "Digital Personal Data Protection (DPDP) Act Consent",
+    "specimenMode": "Preloaded Benchmark Specimen",
+    "manualMode": "Custom Upload",
+    "verifyInstantly": "Verify Documents Instantly →",
+    "proceedCheckout": "Proceed to E-Sign & Checkout →",
+    "trackOrder": "Track Order & Installation →"
+  },
+  "checkout": {
+    "pageTitle": "Commercial E-Sign & Checkout",
+    "orderSummary": "Order & Package Summary",
+    "eSignAgreement": "Digital Commercial Agreement Execution",
+    "legalName": "Full Legal Name of Signatory",
+    "agreeTerms": "I confirm that I am an authorized signatory for this business entity and accept the Airtel enterprise connectivity terms.",
+    "paymentMethod": "Select Payment Instrument",
+    "payAndAuthorize": "Authorize & Create Order",
+    "paymentProcessing": "Authorizing payment..."
+  },
+  "tracker": {
+    "pageTitle": "Live Provisioning & Installation Tracker",
+    "noOrdersTitle": "No Active Orders Found",
+    "noOrdersDesc": "You do not have an active provisioning order yet. Accept a tailored quote and complete KYC to start installation.",
+    "browseQuotes": "Browse Quotes →",
+    "scheduleSlot": "Schedule Preferred Installation Slot",
+    "proactiveHelp": "Request Technician Assistance",
+    "statusActivated": "ACTIVATED",
+    "statusPending": "PENDING"
   },
   "errors": {
     "notFoundTitle": "Page not found",
@@ -41,6 +125,8 @@
     "minimumContract": "Minimum contract",
     "firstYearCost": "First-year cost",
     "months": "months",
-    "perMonth": "/month"
+    "perMonth": "/month",
+    "staff": "staff",
+    "sites": "sites"
   }
 }

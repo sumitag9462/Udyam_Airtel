@@ -216,6 +216,23 @@ export async function createOrder({
  * Get order by ID with ownership enforcement.
  */
 export async function getOrder(orderIdentifier, user) {
+  if (orderIdentifier === 'ORD-NEW') {
+    const filter = {};
+    if (user && user.role === 'owner') {
+      filter.userId = user._id;
+    }
+    const latestOrder = await Order.findOne(filter)
+      .sort({ createdAt: -1 })
+      .populate('quoteId')
+      .populate('leadId')
+      .populate('kycCaseId');
+
+    if (latestOrder) {
+      return latestOrder;
+    }
+    throw new OrderError('No active orders found for this account', 'NOT_FOUND', 404);
+  }
+
   const query = mongoose.isValidObjectId(orderIdentifier)
     ? { _id: orderIdentifier }
     : { orderId: orderIdentifier };
@@ -226,7 +243,7 @@ export async function getOrder(orderIdentifier, user) {
     .populate('kycCaseId');
 
   if (!order) {
-    throw new OrderError('Order not found', 'NOT_FOUND', 404);
+    throw new OrderError(`Order '${orderIdentifier}' not found`, 'NOT_FOUND', 404);
   }
 
   // Cross-owner IDOR check: Regular owners can only view their own order

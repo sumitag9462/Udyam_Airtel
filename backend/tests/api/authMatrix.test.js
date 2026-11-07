@@ -25,6 +25,14 @@ describe('Phase 3: RBAC Authorization Matrix & IDOR Prevention', () => {
       await mongoose.connect(config.MONGO_URI);
     }
 
+    // Clean up any stale matrix test users from prior interrupted runs
+    await User.deleteMany({
+      $or: [
+        { phoneHash: { $in: ['matrix_hash_owner_a', 'matrix_hash_owner_b'] } },
+        { email: { $in: ['advisor-matrix@airtel.com', 'partner-matrix@airtel.com', 'admin-matrix@airtel.com'] } },
+      ],
+    });
+
     // Create distinct test users
     ownerA = await User.create({
       role: 'owner',
@@ -69,9 +77,6 @@ describe('Phase 3: RBAC Authorization Matrix & IDOR Prevention', () => {
     await Quote.deleteMany({
       userId: { $in: [ownerA._id, ownerB._id, admin._id] },
     });
-    if (mongoose.connection.readyState === 1) {
-      await mongoose.disconnect();
-    }
   });
 
   const sampleProfile = {

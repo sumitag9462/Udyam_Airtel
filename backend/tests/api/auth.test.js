@@ -12,9 +12,7 @@ describe('Phase 3: Auth API Suite', () => {
   });
 
   afterAll(async () => {
-    if (mongoose.connection.readyState === 1) {
-      await mongoose.disconnect();
-    }
+    // Keep connection open for subsequent suites when running in band
   });
 
   beforeEach(async () => {

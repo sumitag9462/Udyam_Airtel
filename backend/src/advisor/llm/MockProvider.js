@@ -20,8 +20,7 @@ export default class MockProvider extends LLMProvider {
     const extracted = {};
 
     // 1. Extract business type & segment
-    if (!existingProfile.businessType) {
-      if (/\b(law|advocate|ca|chartered|consultant|legal)\b/i.test(userText) || /लॉ\s*ऑफिस|वकील/i.test(userText)) {
+    if (/\b(law|advocate|ca|chartered|consultant|legal)\b/i.test(userText) || /लॉ\s*ऑफिस|वकील/i.test(userText)) {
         extracted.businessType = 'CA / Law office';
         extracted.segment = 'prof';
       } else if (/\b(pathology|diagnostic)\b/i.test(userText)) {
@@ -79,7 +78,6 @@ export default class MockProvider extends LLMProvider {
         extracted.businessType = 'Retail store';
         extracted.segment = 'micro';
       }
-    }
 
     // 2. Extract city & city tier
     const tier1Cities = ['delhi', 'mumbai', 'bengaluru', 'bangalore', 'chennai', 'hyderabad', 'kolkata', 'pune', 'ahmedabad'];
@@ -240,9 +238,23 @@ export default class MockProvider extends LLMProvider {
     let reply = '';
     switch (nextState) {
       case 'BUSINESS_PROFILE':
-        reply = isHindi
-          ? 'Namaste! Main Airtel Udyam One advisor hoon. Aapka kis cheez ka business hai aur kis city mein sthit hai?'
-          : 'Welcome to Airtel Udyam One. What type of business do you operate, and in which city are you located?';
+        if (!mergedProfile.businessType && mergedProfile.city) {
+          reply = isHindi
+            ? `${mergedProfile.city} mein aapka kis cheez ka business ya office hai?`
+            : `What type of business do you operate in ${mergedProfile.city}?`;
+        } else if (mergedProfile.businessType && !mergedProfile.city) {
+          reply = isHindi
+            ? `Aapka ${mergedProfile.businessType} kis city mein sthit hai?`
+            : `In which city is your ${mergedProfile.businessType} located?`;
+        } else if (questionCount > 0) {
+          reply = isHindi
+            ? 'Aapke business ke baare mein thodi aur jaankari dein (business type aur city), taaki hum sahi connectivity plan suggest kar sakein.'
+            : 'Could you please share your business category and city so we can suggest the most suitable connectivity plan?';
+        } else {
+          reply = isHindi
+            ? 'Namaste! Main Airtel Udyam One advisor hoon. Aapka kis cheez ka business hai aur kis city mein sthit hai?'
+            : 'Welcome to Airtel Udyam One. What type of business do you operate, and in which city are you located?';
+        }
         break;
 
       case 'SCALE':

@@ -2,6 +2,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../store/authStore.js';
 import { useState } from 'react';
+import { switchLanguage, getCurrentLanguage } from '../i18n/index.js';
 
 export default function Navbar() {
   const { i18n, t } = useTranslation();
@@ -10,9 +11,9 @@ export default function Navbar() {
   const { user, isAuthenticated, logout } = useAuthStore();
   const [menuOpen, setMenuOpen] = useState(false);
 
+  const currentLang = getCurrentLanguage();
   const toggleLang = () => {
-    const nextLang = i18n.language === 'hi' ? 'en' : 'hi';
-    i18n.changeLanguage(nextLang);
+    switchLanguage();
   };
 
   const handleLogout = async () => {
@@ -81,7 +82,7 @@ export default function Navbar() {
               className="px-2.5 py-1 text-xs font-semibold rounded-full border border-slate-300 text-slate-700 hover:bg-slate-50 transition-colors"
               aria-label="Switch Language"
             >
-              {i18n.language === 'hi' ? 'English' : 'हिंदी'}
+              {currentLang === 'hi' ? 'English' : 'हिंदी'}
             </button>
 
             {/* Auth CTA */}

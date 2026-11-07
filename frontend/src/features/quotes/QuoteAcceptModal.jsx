@@ -28,6 +28,12 @@ export default function QuoteAcceptModal({ quote, isOpen, onClose, onAccepted })
 
       const res = await acceptQuote(quote.quoteId, idempotencyKey);
       setAccepted(true);
+      if (typeof window !== 'undefined' && window.sessionStorage) {
+        sessionStorage.setItem('udyam_accepted_quote_id', quote.quoteId);
+        sessionStorage.setItem('udyam_last_quote_id', quote.quoteId);
+        if (quote._id) sessionStorage.setItem('udyam_last_quote_mongo_id', quote._id);
+        if (quote.leadId) sessionStorage.setItem('udyam_last_lead_id', quote.leadId);
+      }
       if (onAccepted) onAccepted(res.quote);
     } catch (err) {
       if (err.code === 'PRICE_DRIFT') {
@@ -146,7 +152,8 @@ export default function QuoteAcceptModal({ quote, isOpen, onClose, onAccepted })
                 type="button"
                 onClick={() => {
                   onClose();
-                  navigate(`/kyc?quoteId=${quote.quoteId}`);
+                  const leadParam = quote.leadId ? `&leadId=${quote.leadId}` : '';
+                  navigate(`/kyc?quoteId=${quote.quoteId}${leadParam}`);
                 }}
                 className="btn-primary w-full text-sm font-semibold py-3"
               >

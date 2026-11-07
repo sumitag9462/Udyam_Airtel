@@ -100,3 +100,27 @@ Running 6 tests using 1 worker
 ✓ Assertion passed: Funnel Stage 5 (Activated): 368
 ✓ seed:verify passed! All Section 3 and Section 7 assertions verified.
 ```
+
+---
+
+## 6. Customer Journey, Edge Case & Security Validation (`scripts/validate-phase3-4-5.js`)
+
+- **Phase 3 Customer Journey:** 23/23 steps passed cleanly against live HTTP endpoints and persistent MongoDB records.
+- **Phase 4 Failure & Edge Cases:** 10/10 edge case/failure tests passed (tampered JWT, cross-tenant IDOR, consent withdrawal, missing fields).
+- **Phase 5 Security & Privacy:** 4/4 security assertions passed (Bcrypt cost 12, refresh token reuse revocation, AES-256-GCM file encryption with SHA-256 integrity match, role-gated RBAC).
+
+---
+
+## 7. High Concurrency & Idempotency Testing (`scripts/test-concurrency.js`)
+
+- 10 concurrent quote acceptance requests: 10/10 resolved idempotently with identical status 200 and zero price drift.
+- 10 concurrent order creations with same `Idempotency-Key`: Exactly 1 order created in DB, 0 duplicate records.
+- 5 distinct parallel orders created concurrently: Exactly 5 unique orders created with verified pricing.
+
+---
+
+## 8. Static Analysis & Build Verification
+
+- **ESLint (`npm run lint`):** 0 errors, 31 warnings across frontend, backend, tests, and scripts.
+- **Vite Production Build (`npm run build`):** Built successfully in 998ms.
+- **Health & Readiness:** `GET /healthz` (200 healthy), `GET /readyz` (200 connected).

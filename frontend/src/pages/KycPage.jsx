@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import ConsentNotice from '../features/kyc/ConsentNotice.jsx';
 import KycUploader from '../features/kyc/KycUploader.jsx';
 import KycStatusCard from '../features/kyc/KycStatusCard.jsx';
@@ -8,6 +9,7 @@ import Footer from '../components/Footer.jsx';
 import { useAuthStore } from '../store/authStore.js';
 
 export default function KycPage() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const rawQuoteId = searchParams.get('quoteId');
   const storedQuoteId = typeof window !== 'undefined' && window.sessionStorage ? sessionStorage.getItem('udyam_last_quote_id') : null;
@@ -15,7 +17,12 @@ export default function KycPage() {
   if (rawQuoteId && typeof window !== 'undefined' && window.sessionStorage) {
     sessionStorage.setItem('udyam_last_quote_id', rawQuoteId);
   }
-  const leadId = searchParams.get('leadId') || null;
+  const rawLeadId = searchParams.get('leadId');
+  const storedLeadId = typeof window !== 'undefined' && window.sessionStorage ? sessionStorage.getItem('udyam_last_lead_id') : null;
+  const leadId = rawLeadId || storedLeadId || null;
+  if (rawLeadId && typeof window !== 'undefined' && window.sessionStorage) {
+    sessionStorage.setItem('udyam_last_lead_id', rawLeadId);
+  }
   const navigate = useNavigate();
 
   const { user } = useAuthStore();
@@ -54,22 +61,22 @@ export default function KycPage() {
           <div className="flex items-center justify-between max-w-lg mx-auto text-xs font-semibold">
             <div className="flex items-center gap-1.5 text-gray-500">
               <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[10px] font-bold">✓</span>
-              <span>1. Quote Locked</span>
+              <span>{t('kyc.step1Locked', '1. Quote Locked')}</span>
             </div>
             <div className="h-0.5 w-8 bg-airtel-red"></div>
             <div className="flex items-center gap-1.5 text-airtel-red">
               <span className="w-5 h-5 rounded-full bg-airtel-red text-white flex items-center justify-center text-[10px]">2</span>
-              <span>2. Smart KYC</span>
+              <span>{t('kyc.step2Kyc', '2. Smart KYC')}</span>
             </div>
             <div className="h-0.5 w-8 bg-gray-200"></div>
             <div className="flex items-center gap-1.5 text-gray-400">
               <span className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-[10px]">3</span>
-              <span>3. Checkout</span>
+              <span>{t('kyc.step3Checkout', '3. Checkout')}</span>
             </div>
             <div className="h-0.5 w-8 bg-gray-200"></div>
             <div className="flex items-center gap-1.5 text-gray-400">
               <span className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-[10px]">4</span>
-              <span>4. Installation</span>
+              <span>{t('kyc.step4Install', '4. Installation')}</span>
             </div>
           </div>
         </div>

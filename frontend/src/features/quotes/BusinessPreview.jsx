@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { previewQuoteScenario } from './api.js';
 
 export default function BusinessPreview({ quoteId, quote, profile }) {
@@ -28,24 +28,37 @@ export default function BusinessPreview({ quoteId, quote, profile }) {
     },
   ];
 
-  const handleRunScenario = async (scenarioId) => {
-    setActiveScenario(scenarioId);
-    setError(null);
-    if (!scenarioData[scenarioId]) {
-      try {
-        setLoading(true);
-        const res = await previewQuoteScenario(quoteId, scenarioId, {
-          lineItems: quote?.lineItems,
-          profile: profile || quote?.profileSnapshot,
-        });
-        setScenarioData((prev) => ({ ...prev, [scenarioId]: res.preview }));
-      } catch (err) {
-        setError(err.message || 'Failed to simulate scenario.');
-      } finally {
-        setLoading(false);
-      }
+  const fetchScenario = async (scenarioId) => {
+    if (!scenarioId) return;
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await previewQuoteScenario(quoteId, scenarioId, {
+        lineItems: quote?.lineItems,
+        profile: profile || quote?.profileSnapshot,
+      });
+      setScenarioData((prev) => ({ ...prev, [scenarioId]: res.preview }));
+    } catch (err) {
+      setError(err.message || 'Failed to simulate scenario.');
+    } finally {
+      setLoading(false);
     }
   };
+
+  const handleRunScenario = (scenarioId) => {
+    setActiveScenario(scenarioId);
+    fetchScenario(scenarioId);
+  };
+
+  // Re-calculate the active scenario dynamically when the plan, add-ons, or quantities change
+  const lineItemsKey = JSON.stringify(
+    (quote?.lineItems || []).map((it) => ({ id: it.productId, qty: it.qty, price: it.lineMonthly }))
+  );
+  useEffect(() => {
+    if (activeScenario) {
+      fetchScenario(activeScenario);
+    }
+  }, [activeScenario, quote?.monthlyTotal, quote?.tierLabel, lineItemsKey]);
 
   const preview = activeScenario ? scenarioData[activeScenario] : null;
 

@@ -327,6 +327,9 @@ In accordance with strict hackathon transparency rules, all prototype integratio
 ## 12. Comprehensive Documentation Index
 
 ### Release, Audit & Verification Reports
+- [Master Live Demonstration Runbook](docs/DEMO_GUIDE.md) — Timed 5–7 minute jury walkthrough with 4 customer segment profiles.
+- [System Integrations Matrix](docs/INTEGRATIONS.md) — Authoritative classification of fully implemented vs. simulated components.
+- [Architectural Limitations & Boundaries](docs/LIMITATIONS.md) — Honest disclosure of technical assumptions and production migration roadmap.
 - [Run Without Docker: Local Setup Guide](docs/LOCAL_SETUP.md) — Comprehensive native macOS, Linux, and Atlas setup instructions.
 - [Non-Docker MERN Migration Audit](docs/MIGRATION_AUDIT.md) — Structural diff, removed containers, and entrypoint mapping.
 - [UI Defect Fix Audit](docs/UI_FIX_AUDIT.md) — Root cause analysis and verified fixes for all 6 UI regressions.

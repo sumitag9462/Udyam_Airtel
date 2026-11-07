@@ -10,9 +10,7 @@ describe('Phase 1: Seed and Registry Verification Suite', () => {
   });
 
   afterAll(async () => {
-    if (mongoose.connection.readyState === 1) {
-      await mongoose.disconnect();
-    }
+    // Keep connection open for subsequent suites
   });
 
   it('passes all Section 3 and Section 7 assertions with zero failures', async () => {

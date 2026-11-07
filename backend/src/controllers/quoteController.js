@@ -78,12 +78,14 @@ export async function handleUpdateQuoteItems(req, res, next) {
 
 const previewSchema = z.object({
   scenario: z.enum(['link_failure', 'budget_cut', 'second_site']),
+  lineItems: z.array(z.any()).optional(),
+  profile: z.record(z.any()).optional(),
 });
 
 export async function handlePreviewScenario(req, res, next) {
   try {
-    const { scenario } = previewSchema.parse(req.body);
-    const result = await previewQuoteScenario(req.params.id, scenario, req.user);
+    const { scenario, lineItems, profile } = previewSchema.parse(req.body);
+    const result = await previewQuoteScenario(req.params.id, scenario, req.user, { lineItems, profile });
     res.status(200).json({ ok: true, data: { preview: result } });
   } catch (err) {
     next(err);

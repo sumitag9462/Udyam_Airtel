@@ -36,7 +36,7 @@ export default [
     },
   },
   {
-    files: ['client/**/*.{js,jsx}'],
+    files: ['client/**/*.{js,jsx}', 'frontend/**/*.{js,jsx}'],
     plugins: {
       react: reactPlugin,
     },
@@ -72,7 +72,7 @@ export default [
     },
   },
   {
-    files: ['server/**/*.test.js', 'server/tests/**/*.js'],
+    files: ['server/**/*.test.js', 'server/tests/**/*.js', 'backend/**/*.test.js', 'backend/tests/**/*.js'],
     languageOptions: {
       globals: {
         describe: 'readonly',
@@ -84,6 +84,15 @@ export default [
         beforeEach: 'readonly',
         afterEach: 'readonly',
         jest: 'readonly',
+      },
+    },
+  },
+  {
+    files: ['scripts/**/*.js'],
+    languageOptions: {
+      globals: {
+        document: 'readonly',
+        window: 'readonly',
       },
     },
   },

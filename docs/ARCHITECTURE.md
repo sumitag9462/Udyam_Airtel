@@ -182,3 +182,86 @@ To solve the historical leak where **65% of leads drop before needs assessment**
 - **Top Positive Drivers:** GSTIN present (+0.169), Professional offices (+0.181), Referral lead (+0.126), Higher monthly telecom spend (+0.150).
 - **Negative Drivers:** Cold web form (-0.159), Unassigned field visits (-0.057).
 - **Explainable Output:** Every scored lead outputs the top 3 contributing factors for transparent advisor triage.
+
+---
+
+## 6. End-to-End Customer Journey Workflow
+
+The diagram below details the exact customer workflow from initial mobile discovery through activation:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as SMB Business Owner
+    participant Client as React 18 Web Client
+    participant Auth as Auth & OTP Service
+    participant Advisor as AI Business Advisor
+    participant Quote as Quote & Rules Engine
+    participant KYC as Smart KYC Pipeline
+    participant Order as Order & Telemetry Service
+    participant DB as MongoDB Database
+
+    User->>Client: Open Udyam One (/advisor)
+    Client->>Auth: POST /auth/otp/request & /auth/otp/verify
+    Auth->>DB: Save User & Session Tokens
+    Auth-->>Client: Return JWT in httpOnly Cookie + CSRF Token
+
+    User->>Client: State requirements in Hindi/English
+    Client->>Advisor: POST /advisor/chat (Message + SessionSecret)
+    Advisor->>Advisor: NLP Intent Extraction & Response Guard Sanitization
+    Advisor-->>Client: Conversational Reply & Curated Tiers
+
+    User->>Client: View & Customize Quote (/quotes)
+    Client->>Quote: POST /quotes & POST /rules/preview (Scenarios)
+    Quote->>DB: Persist Draft Quote & Profile Snapshot
+    User->>Client: Accept Quote & Lock Price
+    Client->>Quote: POST /quotes/:id/accept (Idempotency-Key)
+    Quote->>DB: Set status: accepted, Freeze priceHash
+
+    User->>Client: Proceed to Smart KYC (/kyc)
+    Client->>KYC: POST /kyc/consent (DPDP Itemized Notice v1.0)
+    KYC->>DB: Persist Unbundled Consent Record
+    User->>Client: Upload Specimen or Document Capture
+    Client->>KYC: POST /kyc/upload (FormData + consentId)
+    KYC->>KYC: Sharp Laplacian Blur Test + 19 Regulated Checks
+    KYC->>DB: Save AES-256-GCM Encrypted File & KycCase (verified)
+
+    User->>Client: Complete E-Sign & Checkout (/checkout)
+    Client->>Order: POST /orders (quoteId + Idempotency-Key)
+    Order->>DB: Create Order (FEASIBILITY_CONFIRMED) & Link to Lead
+    User->>Client: Pick 2-Hour Installation Slot (/tracker)
+    Client->>Order: POST /orders/:id/slot (Slot selection)
+    Order->>DB: Update status: INSTALL_SCHEDULED
+    Order-->>Client: Live Optical Telemetry (-19.4 dBm) & Provisioning Stepper
+```
+
+---
+
+## 7. Technical Rationale, Security & Scalability Blueprint
+
+### 7.1. Architectural Selection Rationale
+- **Non-Docker Modular MERN:** Chosen for zero-overhead local deployment, instant startup, and full inspectability during jury evaluation without virtualization layers.
+- **Strict Separation of Rules from NLP:** Large language models hallucinate numbers and dates. Decoupling the rules engine (`backend/src/rules/`) ensures 100% mathematical determinism while allowing the conversational layer to remain flexible, empathetic, and bilingual.
+- **Dual-Token JWT Security:** Access tokens reside in short-lived (15 min) memory/httpOnly cookies, while refresh tokens are stored in secure httpOnly cookies with automatic rotation and family reuse invalidation.
+
+### 7.2. System Scalability Strategy
+1. **Stateless API Tier:** Express controllers hold no in-memory session state; horizontal scaling across multiple instances or serverless containers is supported out-of-the-box behind an NGINX or AWS ALB reverse proxy.
+2. **Read-Heavy Catalogue Optimization:** The 25 enterprise telecommunication products and rules configurations are memory-cacheable in Redis, reducing database round-trips for high-traffic pricing requests.
+3. **Asynchronous KYC Processing:** In high-volume production, document OCR (Tesseract / Document AI) and blur analysis execute via background worker queues (e.g. BullMQ / Redis) while the user receives immediate progress streaming via Server-Sent Events (SSE) or WebSockets.
+
+### 7.3. Sensitive Document Protection Architecture
+- **AES-256-GCM Authenticated Encryption:** Every file written to disk is encrypted with a unique 12-byte random initialization vector (IV) and a 16-byte authentication tag. Any tampering with ciphertext on disk triggers an immediate decryption error.
+- **Statutory DPDP Act 2023 Lifecycle:** Documents are purposed-gated (`purposes: ['kyc_verification']`), and automated retention schedules purge rejected files after 30 days and verified customer records after 180 days.
+- **PII Redaction in Telemetry:** All server log outputs via Pino redact authentication headers, cookie values, and raw phone numbers, displaying masked identifiers (`******7978`).
+
+### 7.4. Data Consistency & Concurrency Guarantees
+- **Idempotency-Key Header Enforcement:** All state-mutating requests (`POST /quotes/:id/accept`, `POST /orders`) require an `Idempotency-Key` header with unique index enforcement in MongoDB, preventing accidental duplicate billing or order provisioning.
+- **Optimistic Concurrency Control:** Core schemas (`Quote`, `Order`, `Conversation`) implement Mongoose version keys (`__v`), preventing concurrent browser tabs from overwriting locked quotes.
+- **Cryptographic Price Integrity:** Quote acceptance computes a deterministic SHA-256 `priceHash` across line items, unit prices, and quantities. Order creation verifies that catalogue prices have not drifted before finalizing checkout.
+
+### 7.5. Production Integration Roadmap with Airtel Enterprise Services
+- **Airtel IQ CPaaS:** Transition `OTP_MODE=simulated` and `FEATURE_WHATSAPP` to Airtel IQ messaging and voice APIs for multi-channel notification and IVR.
+- **Airtel ANPS (Automated Network Provisioning System):** Replace simulated telemetry with live optical fiber port mapping, automated OLT provisioning, and technician dispatch via field workforce APIs.
+- **Government GSTN/MCA Gateway:** Connect `backend/src/kyc/checks/` to Airtel's secure enterprise GSP gateway for real-time B2B GSTIN status lookups.
+- **Enterprise KMS:** Replace local `.env` encryption keys with AWS KMS or Google Cloud KMS customer-managed encryption keys (CMEK) with annual rotation.
+

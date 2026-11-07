@@ -108,9 +108,6 @@ describe('Phase 6: Orders, Tracker & Provisioning Simulator Suite', () => {
     await Quote.deleteMany({ _id: testQuote._id });
     await Order.deleteMany({ userId: ownerUser._id });
     await HelpRequest.deleteMany({ userId: ownerUser._id });
-    if (mongoose.connection.readyState === 1) {
-      await mongoose.disconnect();
-    }
   });
 
   describe('Order Creation & Idempotency (Non-negotiable Rule 12)', () => {

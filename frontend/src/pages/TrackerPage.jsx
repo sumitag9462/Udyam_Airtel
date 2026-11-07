@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import OrderTimeline from '../features/tracker/OrderTimeline.jsx';
 import SlotPicker from '../features/tracker/SlotPicker.jsx';
 import SimulateAdvanceControl from '../features/tracker/SimulateAdvanceControl.jsx';
@@ -9,6 +10,7 @@ import Footer from '../components/Footer.jsx';
 import { createOrderFromQuote, getOrder, listOrders } from '../features/tracker/api.js';
 
 export default function TrackerPage() {
+  const { t } = useTranslation();
   const { id: routeOrderId, orderId: routeParamOrderId } = useParams();
   const [searchParams] = useSearchParams();
   const quoteId = searchParams.get('quoteId') || null;
@@ -24,9 +26,23 @@ export default function TrackerPage() {
     setError(null);
     try {
       if (orderParam && orderParam !== 'ORD-NEW') {
-        const data = await getOrder(orderParam);
-        setOrder(data);
-      } else if (quoteId) {
+        try {
+          const data = await getOrder(orderParam);
+          setOrder(data);
+          return;
+        } catch (fetchErr) {
+          setError(`Order '${orderParam}' was not found. Please verify the order number or check your recent orders below.`);
+          const userOrders = await listOrders().catch(() => []);
+          if (userOrders && userOrders.length > 0) {
+            setOrder(userOrders[0]);
+          } else {
+            setOrder(null);
+          }
+          return;
+        }
+      }
+
+      if (quoteId) {
         // Create order idempotently or retrieve existing
         const data = await createOrderFromQuote({ quoteId });
         setOrder(data);
@@ -36,6 +52,16 @@ export default function TrackerPage() {
         if (orders && orders.length > 0) {
           setOrder(orders[0]);
         } else {
+          const storedOrderId = typeof window !== 'undefined' && window.sessionStorage ? sessionStorage.getItem('udyam_last_order_id') : null;
+          if (storedOrderId) {
+            try {
+              const data = await getOrder(storedOrderId);
+              setOrder(data);
+              return;
+            } catch {
+              // ignore
+            }
+          }
           setOrder(null);
         }
       }
@@ -70,15 +96,15 @@ export default function TrackerPage() {
         ) : !order ? (
           <div className="bg-white border border-gray-200 rounded-xl p-12 text-center shadow-sm">
             <div className="text-3xl mb-2">📦</div>
-            <h3 className="font-bold text-gray-900 text-lg">No Active Orders Found</h3>
+            <h3 className="font-bold text-gray-900 text-lg">{t('tracker.noOrdersTitle', 'No Active Orders Found')}</h3>
             <p className="text-sm text-gray-500 max-w-md mx-auto mt-1 mb-6">
-              You do not have an active provisioning order yet. Accept a tailored quote and complete KYC to start installation.
+              {t('tracker.noOrdersDesc', 'You do not have an active provisioning order yet. Accept a tailored quote and complete KYC to start installation.')}
             </p>
             <Link
               to="/quotes"
               className="px-6 py-2.5 bg-red-600 text-white rounded-lg text-sm font-semibold hover:bg-red-700 transition"
             >
-              Browse Quotes →
+              {t('tracker.browseQuotes', 'Browse Quotes →')}
             </Link>
           </div>
         ) : (

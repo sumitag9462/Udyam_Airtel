@@ -67,9 +67,6 @@ describe('Phase 5: Smart KYC Pipeline & Document Verification Suite', () => {
     await Consent.deleteMany({ userId: ownerUser._id });
     await KycCase.deleteMany({ userId: ownerUser._id });
     await Document.deleteMany({});
-    if (mongoose.connection.readyState === 1) {
-      await mongoose.disconnect();
-    }
   });
 
   describe('StorageProvider: AES-256-GCM Encryption at Rest (C18)', () => {

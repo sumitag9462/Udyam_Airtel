@@ -31,7 +31,7 @@ export default function PrivacyCentrePage() {
     try {
       setLoading(true);
       const res = await apiRequest('/me/overview');
-      setData(res.data);
+      setData(res.data || res);
     } catch (err) {
       setActionError(err.message || 'Failed to load account privacy details');
     } finally {
